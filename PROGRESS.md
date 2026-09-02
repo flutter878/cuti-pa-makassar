@@ -9,7 +9,7 @@
 | Tahap | Deskripsi | Status |
 |---|---|---|
 | Tahap 1 | Setup Dasar (Laravel, DB, Auth, Role, Migration) | ✅ Selesai |
-| Tahap 2 | Data Master (Pegawai, Jabatan, Unit Kerja, Jenis Cuti, Saldo) | ⏳ Belum Mulai |
+| Tahap 2 | Data Master (Pegawai, Jabatan, Unit Kerja, Jenis Cuti, Saldo) | ✅ Selesai |
 | Tahap 3 | Pengajuan Cuti (Form, Validasi H-3, FIFO, Upload) | ⏳ Belum Mulai |
 | Tahap 4 | Persetujuan (Dashboard Admin, Approve, Reject) | ⏳ Belum Mulai |
 | Tahap 5 | Dokumen & Laporan (PDF, Filter, Export) | ⏳ Belum Mulai |
@@ -44,21 +44,21 @@
 
 | # | Task | Status | Keterangan |
 |---|---|---|---|
-| 2.1 | Model + Migration: `JenisCuti` | ⏳ Belum | |
-| 2.2 | CRUD Jenis Cuti (Superadmin) | ⏳ Belum | |
-| 2.3 | Model + Migration: `Jabatan` | ⏳ Belum | sudah di tahap 1 |
-| 2.4 | CRUD Jabatan (Admin/Superadmin) | ⏳ Belum | |
-| 2.5 | Model + Migration: `UnitKerja` | ⏳ Belum | sudah di tahap 1 |
-| 2.6 | CRUD Unit Kerja (Admin/Superadmin) | ⏳ Belum | |
-| 2.7 | Model + Migration: `Pegawai` | ⏳ Belum | sudah di tahap 1 |
-| 2.8 | CRUD Pegawai (Admin/Superadmin) | ⏳ Belum | |
-| 2.9 | Model + Migration: `SaldoCuti` | ⏳ Belum | |
-| 2.10 | Inisialisasi saldo cuti pegawai baru (12 hari/tahun) | ⏳ Belum | |
-| 2.11 | Seeder: data awal jabatan & unit kerja | ⏳ Belum | |
-| 2.12 | Seeder: jenis cuti (6 jenis) | ⏳ Belum | |
-| 2.13 | Halaman daftar pegawai (tabel + filter) | ⏳ Belum | |
-| 2.14 | Halaman detail pegawai | ⏳ Belum | |
-| 2.15 | Halaman saldo cuti per pegawai | ⏳ Belum | |
+| 2.1 | Model + Migration: `JenisCuti` | ✅ Selesai | |
+| 2.2 | CRUD Jenis Cuti (Superadmin) | ⏳ Belum | Ditunda ke Tahap 3 |
+| 2.3 | Model + Migration: `Jabatan` | ✅ Selesai | |
+| 2.4 | CRUD Jabatan (Admin/Superadmin) | ✅ Selesai | |
+| 2.5 | Model + Migration: `UnitKerja` | ✅ Selesai | |
+| 2.6 | CRUD Unit Kerja (Admin/Superadmin) | ✅ Selesai | |
+| 2.7 | Model + Migration: `Pegawai` | ✅ Selesai | |
+| 2.8 | CRUD Pegawai (Admin/Superadmin) | ✅ Selesai | termasuk assign user |
+| 2.9 | Model + Migration: `SaldoCuti` | ✅ Selesai | virtual col `sisa` |
+| 2.10 | Inisialisasi saldo cuti pegawai baru (12 hari/tahun) | ✅ Selesai | auto saat tambah pegawai |
+| 2.11 | Seeder: data awal jabatan & unit kerja | ✅ Selesai | 16 jabatan, 7 unit kerja |
+| 2.12 | Seeder: jenis cuti (6 jenis) | ✅ Selesai | |
+| 2.13 | Halaman daftar pegawai (tabel + filter) | ✅ Selesai | |
+| 2.14 | Halaman detail pegawai | ✅ Selesai | |
+| 2.15 | Halaman saldo cuti per pegawai | ✅ Selesai | index + edit |
 
 ---
 
@@ -179,6 +179,12 @@
 | 2026-09-02 | Buat layout utama (sidebar per role) + komponen sidebar-link |
 | 2026-09-02 | Update Dashboard view sesuai role + validasi status aktif saat login |
 | 2026-09-02 | **Tahap 1 selesai ✅** |
+| 2026-09-02 | Tahap 2: Migration + Model jenis_cuti, saldo_cuti |
+| 2026-09-02 | Tahap 2: Seeder JenisCuti (6), Jabatan (16), UnitKerja (7) |
+| 2026-09-02 | Tahap 2: CRUD Jabatan, UnitKerja, Pegawai, SaldoCuti |
+| 2026-09-02 | Tahap 2: Views semua modul data master |
+| 2026-09-02 | Tahap 2: Routes web.php diperbarui (43 routes) |
+| 2026-09-02 | **Tahap 2 selesai ✅** |
 
 ---
 
