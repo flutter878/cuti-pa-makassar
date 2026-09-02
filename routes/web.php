@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CutiController;
 use App\Http\Controllers\JabatanController;
 use App\Http\Controllers\PegawaiController;
 use App\Http\Controllers\ProfileController;
@@ -28,6 +29,19 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // --------------------------------------------------------
+    // PEGAWAI — Pengajuan Cuti
+    // --------------------------------------------------------
+    Route::middleware(['role:pegawai'])->group(function () {
+        Route::get('/cuti', [CutiController::class, 'index'])->name('cuti.index');
+        Route::get('/cuti/ajukan', [CutiController::class, 'create'])->name('cuti.create');
+        Route::post('/cuti', [CutiController::class, 'store'])->name('cuti.store');
+        Route::get('/cuti/{cuti}', [CutiController::class, 'show'])->name('cuti.show');
+        Route::delete('/cuti/{cuti}', [CutiController::class, 'destroy'])->name('cuti.destroy');
+        Route::get('/cuti/{cuti}/lampiran/{dokumen}', [CutiController::class, 'downloadLampiran'])->name('cuti.download');
+        Route::get('/cuti/hitung-hari', [CutiController::class, 'hitungHari'])->name('cuti.hitung-hari');
+    });
 
     // --------------------------------------------------------
     // ADMIN & SUPERADMIN

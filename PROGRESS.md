@@ -10,7 +10,7 @@
 |---|---|---|
 | Tahap 1 | Setup Dasar (Laravel, DB, Auth, Role, Migration) | ✅ Selesai |
 | Tahap 2 | Data Master (Pegawai, Jabatan, Unit Kerja, Jenis Cuti, Saldo) | ✅ Selesai |
-| Tahap 3 | Pengajuan Cuti (Form, Validasi H-3, FIFO, Upload) | ⏳ Belum Mulai |
+| Tahap 3 | Pengajuan Cuti (Form, Validasi H-3, FIFO, Upload) | ✅ Selesai |
 | Tahap 4 | Persetujuan (Dashboard Admin, Approve, Reject) | ⏳ Belum Mulai |
 | Tahap 5 | Dokumen & Laporan (PDF, Filter, Export) | ⏳ Belum Mulai |
 | Tahap 6 | Pengujian Menyeluruh | ⏳ Belum Mulai |
@@ -66,20 +66,20 @@
 
 | # | Task | Status | Keterangan |
 |---|---|---|---|
-| 3.1 | Model + Migration: `Cuti` | ⏳ Belum | |
-| 3.2 | Model + Migration: `CutiSaldoDetail` | ⏳ Belum | FIFO tracking |
-| 3.3 | Model + Migration: `DokumenCuti` | ⏳ Belum | lampiran |
-| 3.4 | Form pengajuan cuti | ⏳ Belum | |
-| 3.5 | Hitung otomatis jumlah hari dari tanggal | ⏳ Belum | |
-| 3.6 | Validasi H-3 (cuti tahunan) | ⏳ Belum | |
-| 3.7 | Validasi saldo mencukupi | ⏳ Belum | |
-| 3.8 | Logika FIFO penggunaan saldo | ⏳ Belum | saldo terlama dulu |
-| 3.9 | Upload lampiran (jika diperlukan) | ⏳ Belum | |
-| 3.10 | Generate nomor pengajuan otomatis | ⏳ Belum | |
-| 3.11 | Halaman riwayat cuti pegawai | ⏳ Belum | |
-| 3.12 | Filter riwayat (tahun, jenis, status) | ⏳ Belum | |
-| 3.13 | Halaman detail pengajuan | ⏳ Belum | |
-| 3.14 | Pembatalan pengajuan oleh pegawai | ⏳ Belum | saldo dikembalikan |
+| 3.1 | Model + Migration: `Cuti` | ✅ Selesai | |
+| 3.2 | Model + Migration: `CutiSaldoDetail` | ✅ Selesai | FIFO tracking |
+| 3.3 | Model + Migration: `DokumenCuti` | ✅ Selesai | lampiran |
+| 3.4 | Form pengajuan cuti | ✅ Selesai | |
+| 3.5 | Hitung otomatis jumlah hari dari tanggal | ✅ Selesai | JS + service |
+| 3.6 | Validasi H-3 (cuti tahunan) | ✅ Selesai | di CutiService |
+| 3.7 | Validasi saldo mencukupi | ✅ Selesai | di CutiService |
+| 3.8 | Logika FIFO penggunaan saldo | ✅ Selesai | saldo terlama dulu |
+| 3.9 | Upload lampiran (jika diperlukan) | ✅ Selesai | storage/public |
+| 3.10 | Generate nomor pengajuan otomatis | ✅ Selesai | CUT/YYYY/MM/XXXX |
+| 3.11 | Halaman riwayat cuti pegawai | ✅ Selesai | |
+| 3.12 | Filter riwayat (tahun, jenis, status) | ✅ Selesai | |
+| 3.13 | Halaman detail pengajuan | ✅ Selesai | |
+| 3.14 | Pembatalan pengajuan oleh pegawai | ✅ Selesai | saldo dikembalikan |
 
 ---
 
@@ -185,6 +185,12 @@
 | 2026-09-02 | Tahap 2: Views semua modul data master |
 | 2026-09-02 | Tahap 2: Routes web.php diperbarui (43 routes) |
 | 2026-09-02 | **Tahap 2 selesai ✅** |
+| 2026-09-02 | Tahap 3: Migration + Model cuti, cuti_saldo_detail, dokumen_cuti, persetujuan_cuti |
+| 2026-09-02 | Tahap 3: CutiService — H-3, FIFO, nomor pengajuan, batalkan, kurangi/kembalikan saldo |
+| 2026-09-02 | Tahap 3: CutiController — create, store, index, show, destroy, download |
+| 2026-09-02 | Tahap 3: Views cuti — create, index, show |
+| 2026-09-02 | Tahap 3: Routes cuti pegawai ditambahkan |
+| 2026-09-02 | **Tahap 3 selesai ✅** |
 
 ---
 
