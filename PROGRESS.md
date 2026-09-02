@@ -8,7 +8,7 @@
 
 | Tahap | Deskripsi | Status |
 |---|---|---|
-| Tahap 1 | Setup Dasar (Laravel, DB, Auth, Role, Migration) | 🔄 Sedang Berjalan |
+| Tahap 1 | Setup Dasar (Laravel, DB, Auth, Role, Migration) | ✅ Selesai |
 | Tahap 2 | Data Master (Pegawai, Jabatan, Unit Kerja, Jenis Cuti, Saldo) | ⏳ Belum Mulai |
 | Tahap 3 | Pengajuan Cuti (Form, Validasi H-3, FIFO, Upload) | ⏳ Belum Mulai |
 | Tahap 4 | Persetujuan (Dashboard Admin, Approve, Reject) | ⏳ Belum Mulai |
@@ -24,19 +24,19 @@
 | 1.1 | Instalasi Laravel | ✅ Selesai | Laravel 12 (PHP 8.2) |
 | 1.2 | Konfigurasi `.env` (DB, timezone, app name) | ✅ Selesai | DB: `cuti_pa_makassar`, TZ: Asia/Makassar |
 | 1.3 | Buat database MySQL | ✅ Selesai | `cuti_pa_makassar` charset utf8mb4 |
-| 1.4 | Install Laravel Breeze (auth) + Tailwind CSS | 🔄 Sedang | Breeze Blade stack |
-| 1.5 | Buat migration: `roles` | ⏳ Belum | |
-| 1.6 | Buat migration: `users` (tambah `role_id`, `status`) | ⏳ Belum | |
-| 1.7 | Buat migration: `jabatan` | ⏳ Belum | |
-| 1.8 | Buat migration: `unit_kerja` | ⏳ Belum | |
-| 1.9 | Buat migration: `pegawai` | ⏳ Belum | |
-| 1.10 | Jalankan semua migration | ⏳ Belum | |
-| 1.11 | Buat Seeder: `roles` (pegawai, admin, superadmin) | ⏳ Belum | |
-| 1.12 | Buat Seeder: user superadmin awal | ⏳ Belum | |
-| 1.13 | Buat Middleware: `RoleMiddleware` | ⏳ Belum | |
-| 1.14 | Daftarkan middleware di `bootstrap/app.php` | ⏳ Belum | |
-| 1.15 | Buat layout utama Blade dengan sidebar per role | ⏳ Belum | |
-| 1.16 | Sesuaikan redirect login berdasarkan role | ⏳ Belum | |
+| 1.4 | Install Laravel Breeze (auth) + Tailwind CSS | ✅ Selesai | Breeze Blade stack |
+| 1.5 | Buat migration: `roles` | ✅ Selesai | |
+| 1.6 | Buat migration: `users` (tambah `role_id`, `status`) | ✅ Selesai | |
+| 1.7 | Buat migration: `jabatan` | ✅ Selesai | |
+| 1.8 | Buat migration: `unit_kerja` | ✅ Selesai | |
+| 1.9 | Buat migration: `pegawai` | ✅ Selesai | |
+| 1.10 | Jalankan semua migration | ✅ Selesai | |
+| 1.11 | Buat Seeder: `roles` (pegawai, admin, superadmin) | ✅ Selesai | |
+| 1.12 | Buat Seeder: user superadmin awal | ✅ Selesai | superadmin@pa-makassar.go.id |
+| 1.13 | Buat Middleware: `RoleMiddleware` | ✅ Selesai | |
+| 1.14 | Daftarkan middleware di `bootstrap/app.php` | ✅ Selesai | alias: `role` |
+| 1.15 | Buat layout utama Blade dengan sidebar per role | ✅ Selesai | |
+| 1.16 | Sesuaikan redirect login berdasarkan role | ✅ Selesai | cek status aktif/nonaktif |
 
 ---
 
@@ -171,7 +171,14 @@
 | Tanggal | Aktivitas |
 |---|---|
 | 2026-09-02 | Inisialisasi proyek, install Laravel 12, konfigurasi .env, buat database MySQL |
-| 2026-09-02 | Install Laravel Breeze (proses) |
+| 2026-09-02 | Install Laravel Breeze + Tailwind CSS (Blade stack) |
+| 2026-09-02 | Buat semua migration Tahap 1: roles, jabatan, unit_kerja, pegawai, users |
+| 2026-09-02 | Buat Models: Role, Jabatan, UnitKerja, Pegawai, User (dengan helper role) |
+| 2026-09-02 | Buat Seeder: RoleSeeder (3 role), SuperadminSeeder |
+| 2026-09-02 | Buat RoleMiddleware, daftarkan di bootstrap/app.php sebagai alias `role` |
+| 2026-09-02 | Buat layout utama (sidebar per role) + komponen sidebar-link |
+| 2026-09-02 | Update Dashboard view sesuai role + validasi status aktif saat login |
+| 2026-09-02 | **Tahap 1 selesai ✅** |
 
 ---
 
