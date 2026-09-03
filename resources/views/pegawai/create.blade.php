@@ -76,6 +76,29 @@
                     </select>
                 </div>
 
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Atasan Langsung
+                        <span class="text-gray-400 font-normal text-xs">(Panitera / Sekretaris yang membawahi pegawai ini)</span>
+                    </label>
+                    <select name="atasan_langsung_id"
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">— Tidak ada atasan langsung —</option>
+                        @foreach($calonAtasan as $a)
+                            <option value="{{ $a->id }}" {{ old('atasan_langsung_id') == $a->id ? 'selected' : '' }}>
+                                {{ $a->nama }} — {{ $a->jabatan?->nama_jabatan }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('atasan_langsung_id')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                    <p class="text-xs text-gray-400 mt-1">
+                        Pengajuan cuti akan diteruskan ke atasan langsung sebelum ke Ketua.
+                        Kosongkan jika pengajuan langsung ke Ketua.
+                    </p>
+                </div>
+
             </div>
         </x-form-card>
 
