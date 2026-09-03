@@ -33,7 +33,7 @@ class AuthenticatedSessionController extends Controller
             $request->session()->regenerateToken();
 
             return back()->withErrors([
-                'email' => 'Akun Anda telah dinonaktifkan. Hubungi administrator.',
+                'login' => 'Akun Anda telah dinonaktifkan. Hubungi administrator.',
             ]);
         }
 

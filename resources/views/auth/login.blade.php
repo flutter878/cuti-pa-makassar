@@ -1,26 +1,26 @@
 <x-guest-layout>
 
     <h2 class="text-2xl font-bold text-gray-800 mb-1">Masuk</h2>
-    <p class="text-sm text-gray-500 mb-7">Masukkan kredensial akun Anda</p>
+    <p class="text-sm text-gray-500 mb-7">Sistem Informasi Cuti — Pengadilan Agama Makassar</p>
 
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
     <form method="POST" action="{{ route('login') }}" class="space-y-4">
         @csrf
 
-        {{-- Email --}}
+        {{-- NIP / Email --}}
         <div>
-            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
-                Email
+            <label for="login" class="block text-sm font-medium text-gray-700 mb-1">
+                NIP / Email
             </label>
-            <input id="email" type="email" name="email"
-                   value="{{ old('email') }}"
+            <input id="login" type="text" name="login"
+                   value="{{ old('login') }}"
                    required autofocus autocomplete="username"
-                   placeholder="nama@pa-makassar.go.id"
+                   placeholder="Masukkan NIP atau email"
                    class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm
                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                          @error('email') border-red-400 bg-red-50 @enderror">
-            @error('email')
+                          @error('login') border-red-400 bg-red-50 @enderror">
+            @error('login')
                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
             @enderror
         </div>
@@ -62,6 +62,12 @@
                        transition-colors duration-150 mt-2">
             Masuk
         </button>
+
+        {{-- Petunjuk login pertama --}}
+        <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+            <p class="text-xs text-blue-700 font-semibold mb-1">💡 Login Pertama Kali?</p>
+            <p class="text-xs text-blue-600">Gunakan <strong>NIP</strong> sebagai username dan <strong>NIP</strong> sebagai password. Segera ubah password setelah masuk.</p>
+        </div>
     </form>
 
 </x-guest-layout>

@@ -9,23 +9,29 @@ use Illuminate\Validation\Rule;
 
 class ProfileUpdateRequest extends FormRequest
 {
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:100'],
             'email' => [
                 'required',
                 'string',
-                'lowercase',
                 'email',
-                'max:255',
+                'max:150',
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'name.required'  => 'Nama wajib diisi.',
+            'name.max'       => 'Nama maksimal 100 karakter.',
+            'email.required' => 'Email wajib diisi.',
+            'email.email'    => 'Format email tidak valid.',
+            'email.unique'   => 'Email sudah digunakan oleh akun lain.',
+            'email.max'      => 'Email maksimal 150 karakter.',
         ];
     }
 }

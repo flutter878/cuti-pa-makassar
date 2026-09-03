@@ -25,7 +25,7 @@ class TestUserSeeder extends Seeder
         $jabatanStaf       = Jabatan::where('nama_jabatan', 'Staf')->first();
         $unitKerja         = UnitKerja::first();
 
-        // ── 1. Superadmin (sudah ada dari SuperadminSeeder, pastikan ada) ──
+        // ── 1. Superadmin — password: 'password' ──
         User::firstOrCreate(
             ['email' => 'superadmin@pa-makassar.go.id'],
             [
@@ -36,7 +36,7 @@ class TestUserSeeder extends Seeder
             ]
         );
 
-        // ── 2. Admin ──
+        // ── 2. Admin — password: 'password' ──
         User::firstOrCreate(
             ['email' => 'admin@pa-makassar.go.id'],
             [
@@ -47,7 +47,7 @@ class TestUserSeeder extends Seeder
             ]
         );
 
-        // ── 3. Ketua (role pegawai, jabatan Ketua) ──
+        // ── 3. Ketua — NIP: 197001011990031001, password: NIP ──
         $pegawaiKetua = Pegawai::firstOrCreate(
             ['nip' => '197001011990031001'],
             [
@@ -59,18 +59,20 @@ class TestUserSeeder extends Seeder
             ]
         );
         SaldoCuti::inisialisasi($pegawaiKetua->id);
-        User::firstOrCreate(
+        $userKetua = User::firstOrCreate(
             ['email' => 'ketua@pa-makassar.go.id'],
             [
                 'role_id'    => $rolePegawai->id,
                 'pegawai_id' => $pegawaiKetua->id,
                 'name'       => $pegawaiKetua->nama,
-                'password'   => Hash::make('password'),
+                'password'   => Hash::make('197001011990031001'),
                 'status'     => 'aktif',
             ]
         );
+        // Update password jika akun sudah ada (untuk re-seed)
+        $userKetua->update(['password' => Hash::make('197001011990031001'), 'pegawai_id' => $pegawaiKetua->id]);
 
-        // ── 4. Panitera (role pegawai, jabatan Panitera) ──
+        // ── 4. Panitera — NIP: 197205151995031002, password: NIP ──
         $pegawaiPanitera = Pegawai::firstOrCreate(
             ['nip' => '197205151995031002'],
             [
@@ -82,18 +84,19 @@ class TestUserSeeder extends Seeder
             ]
         );
         SaldoCuti::inisialisasi($pegawaiPanitera->id);
-        User::firstOrCreate(
+        $userPanitera = User::firstOrCreate(
             ['email' => 'panitera@pa-makassar.go.id'],
             [
                 'role_id'    => $rolePegawai->id,
                 'pegawai_id' => $pegawaiPanitera->id,
                 'name'       => $pegawaiPanitera->nama,
-                'password'   => Hash::make('password'),
+                'password'   => Hash::make('197205151995031002'),
                 'status'     => 'aktif',
             ]
         );
+        $userPanitera->update(['password' => Hash::make('197205151995031002'), 'pegawai_id' => $pegawaiPanitera->id]);
 
-        // ── 5. Sekretaris (role pegawai, jabatan Sekretaris) ──
+        // ── 5. Sekretaris — NIP: 197408201999031003, password: NIP ──
         $pegawaiSekretaris = Pegawai::firstOrCreate(
             ['nip' => '197408201999031003'],
             [
@@ -105,18 +108,19 @@ class TestUserSeeder extends Seeder
             ]
         );
         SaldoCuti::inisialisasi($pegawaiSekretaris->id);
-        User::firstOrCreate(
+        $userSekretaris = User::firstOrCreate(
             ['email' => 'sekretaris@pa-makassar.go.id'],
             [
                 'role_id'    => $rolePegawai->id,
                 'pegawai_id' => $pegawaiSekretaris->id,
                 'name'       => $pegawaiSekretaris->nama,
-                'password'   => Hash::make('password'),
+                'password'   => Hash::make('197408201999031003'),
                 'status'     => 'aktif',
             ]
         );
+        $userSekretaris->update(['password' => Hash::make('197408201999031003'), 'pegawai_id' => $pegawaiSekretaris->id]);
 
-        // ── 6. Pegawai biasa (bawahan Panitera) ──
+        // ── 6. Pegawai Staf — NIP: 198503102010011004, password: NIP, atasan: Panitera ──
         $pegawaiBiasa = Pegawai::firstOrCreate(
             ['nip' => '198503102010011004'],
             [
@@ -128,16 +132,19 @@ class TestUserSeeder extends Seeder
                 'status'             => 'aktif',
             ]
         );
+        // Pastikan atasan langsung terupdate
+        $pegawaiBiasa->update(['atasan_langsung_id' => $pegawaiPanitera->id]);
         SaldoCuti::inisialisasi($pegawaiBiasa->id);
-        User::firstOrCreate(
+        $userBiasa = User::firstOrCreate(
             ['email' => 'pegawai@pa-makassar.go.id'],
             [
                 'role_id'    => $rolePegawai->id,
                 'pegawai_id' => $pegawaiBiasa->id,
                 'name'       => $pegawaiBiasa->nama,
-                'password'   => Hash::make('password'),
+                'password'   => Hash::make('198503102010011004'),
                 'status'     => 'aktif',
             ]
         );
+        $userBiasa->update(['password' => Hash::make('198503102010011004'), 'pegawai_id' => $pegawaiBiasa->id]);
     }
 }
