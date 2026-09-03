@@ -38,9 +38,26 @@
 
             {{-- PEGAWAI --}}
             @if($role === 'pegawai')
-                <x-sidebar-link route="dashboard"   icon="home">Dashboard</x-sidebar-link>
-                <x-sidebar-link route="cuti.create" icon="plus-circle">Ajukan Cuti</x-sidebar-link>
-                <x-sidebar-link route="cuti.index"  icon="list">Riwayat Cuti</x-sidebar-link>
+                <x-sidebar-link route="dashboard"    icon="home">Dashboard</x-sidebar-link>
+                <x-sidebar-link route="cuti.create"  icon="plus-circle">Ajukan Cuti</x-sidebar-link>
+                <x-sidebar-link route="cuti.index"   icon="list">Riwayat Cuti</x-sidebar-link>
+
+                {{-- Menu persetujuan hanya muncul untuk Panitera, Sekretaris, Ketua --}}
+                @php
+                    $jabatanUser = auth()->user()->pegawai?->jabatan?->nama_jabatan;
+                    $jabatanApprover = array_merge(
+                        config('approver.jabatan_atasan', []),
+                        config('approver.jabatan_ketua', [])
+                    );
+                    $isApprover = in_array($jabatanUser, $jabatanApprover);
+                @endphp
+                @if($isApprover)
+                    <div class="pt-2 pb-1">
+                        <p class="px-3 py-1 text-xs font-semibold text-blue-400 uppercase tracking-wider">Persetujuan</p>
+                        <x-sidebar-link route="persetujuan.index" icon="clipboard-check">Pengajuan Masuk</x-sidebar-link>
+                    </div>
+                @endif
+
                 <x-sidebar-link route="profile.edit" icon="user">Profil Saya</x-sidebar-link>
             @endif
 
@@ -49,7 +66,8 @@
                 <x-sidebar-link route="dashboard" icon="home">Dashboard</x-sidebar-link>
 
                 <p class="px-3 pt-4 pb-1 text-xs font-semibold text-blue-400 uppercase tracking-wider">Kepegawaian</p>
-                <x-sidebar-link route="pegawai.index" icon="users">Data Pegawai</x-sidebar-link>
+                <x-sidebar-link route="pegawai.index"  icon="users">Data Pegawai</x-sidebar-link>
+                <x-sidebar-link route="pengguna.index" icon="shield-check">Pengguna</x-sidebar-link>
 
                 <p class="px-3 pt-4 pb-1 text-xs font-semibold text-blue-400 uppercase tracking-wider">Cuti</p>
                 <x-sidebar-link route="persetujuan.index" icon="clipboard-check">Pengajuan Cuti</x-sidebar-link>
@@ -63,8 +81,9 @@
             {{-- SUPERADMIN TAMBAHAN --}}
             @if($role === 'superadmin')
                 <p class="px-3 pt-4 pb-1 text-xs font-semibold text-blue-400 uppercase tracking-wider">Pengaturan</p>
+                <x-sidebar-link route="jabatan.index"    icon="tag">Jabatan</x-sidebar-link>
+                <x-sidebar-link route="unit-kerja.index" icon="tag">Unit Kerja</x-sidebar-link>
                 <x-sidebar-link route="jenis-cuti.index" icon="tag">Jenis Cuti</x-sidebar-link>
-                <x-sidebar-link route="pengguna.index"   icon="shield-check">Pengguna</x-sidebar-link>
             @endif
         </nav>
 

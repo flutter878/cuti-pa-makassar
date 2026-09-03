@@ -50,21 +50,29 @@ class PegawaiController extends Controller
 
     public function create(): View
     {
-        $jabatan   = Jabatan::orderBy('nama_jabatan')->get();
-        $unitKerja = UnitKerja::orderBy('nama_unit')->get();
-        return view('pegawai.create', compact('jabatan', 'unitKerja'));
+        $jabatan         = Jabatan::orderBy('nama_jabatan')->get();
+        $unitKerja       = UnitKerja::orderBy('nama_unit')->get();
+        $calonAtasan     = Pegawai::whereHas('jabatan', function ($q) {
+            $q->whereIn('nama_jabatan', array_merge(
+                config('approver.jabatan_atasan', []),
+                config('approver.jabatan_ketua', [])
+            ));
+        })->where('status', 'aktif')->orderBy('nama')->get();
+
+        return view('pegawai.create', compact('jabatan', 'unitKerja', 'calonAtasan'));
     }
 
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'nip'           => 'required|string|max:20|unique:pegawai,nip',
-            'nama'          => 'required|string|max:100',
-            'email'         => 'nullable|email|max:100|unique:pegawai,email',
-            'no_telepon'    => 'nullable|string|max:20',
-            'jabatan_id'    => 'nullable|exists:jabatan,id',
-            'unit_kerja_id' => 'nullable|exists:unit_kerja,id',
-            'status'        => 'required|in:aktif,nonaktif',
+            'nip'                => 'required|string|max:20|unique:pegawai,nip',
+            'nama'               => 'required|string|max:100',
+            'email'              => 'nullable|email|max:100|unique:pegawai,email',
+            'no_telepon'         => 'nullable|string|max:20',
+            'jabatan_id'         => 'nullable|exists:jabatan,id',
+            'unit_kerja_id'      => 'nullable|exists:unit_kerja,id',
+            'atasan_langsung_id' => 'nullable|exists:pegawai,id',
+            'status'             => 'required|in:aktif,nonaktif',
             // Akun user (opsional saat tambah)
             'buat_akun'     => 'nullable|boolean',
             'email_login'   => 'required_if:buat_akun,1|nullable|email|unique:users,email',
@@ -78,13 +86,14 @@ class PegawaiController extends Controller
 
         DB::transaction(function () use ($request) {
             $pegawai = Pegawai::create([
-                'nip'           => $request->nip,
-                'nama'          => $request->nama,
-                'email'         => $request->email,
-                'no_telepon'    => $request->no_telepon,
-                'jabatan_id'    => $request->jabatan_id,
-                'unit_kerja_id' => $request->unit_kerja_id,
-                'status'        => $request->status,
+                'nip'                => $request->nip,
+                'nama'               => $request->nama,
+                'email'              => $request->email,
+                'no_telepon'         => $request->no_telepon,
+                'jabatan_id'         => $request->jabatan_id,
+                'unit_kerja_id'      => $request->unit_kerja_id,
+                'atasan_langsung_id' => $request->filled('atasan_langsung_id') ? $request->atasan_langsung_id : null,
+                'status'             => $request->status,
             ]);
 
             // Inisialisasi saldo cuti tahun berjalan
@@ -119,38 +128,52 @@ class PegawaiController extends Controller
 
     public function edit(Pegawai $pegawai): View
     {
-        $jabatan   = Jabatan::orderBy('nama_jabatan')->get();
-        $unitKerja = UnitKerja::orderBy('nama_unit')->get();
-        $roles     = Role::orderBy('name')->get();
+        $jabatan     = Jabatan::orderBy('nama_jabatan')->get();
+        $unitKerja   = UnitKerja::orderBy('nama_unit')->get();
+        $roles       = Role::orderBy('name')->get();
+        $calonAtasan = Pegawai::whereHas('jabatan', function ($q) {
+                $q->whereIn('nama_jabatan', array_merge(
+                    config('approver.jabatan_atasan', []),
+                    config('approver.jabatan_ketua', [])
+                ));
+            })
+            ->where('status', 'aktif')
+            ->where('id', '!=', $pegawai->id) // tidak bisa jadi atasan diri sendiri
+            ->orderBy('nama')
+            ->get();
+
         $pegawai->load('user');
 
-        return view('pegawai.edit', compact('pegawai', 'jabatan', 'unitKerja', 'roles'));
+        return view('pegawai.edit', compact('pegawai', 'jabatan', 'unitKerja', 'roles', 'calonAtasan'));
     }
 
     public function update(Request $request, Pegawai $pegawai): RedirectResponse
     {
         $request->validate([
-            'nip'           => 'required|string|max:20|unique:pegawai,nip,' . $pegawai->id,
-            'nama'          => 'required|string|max:100',
-            'email'         => 'nullable|email|max:100|unique:pegawai,email,' . $pegawai->id,
-            'no_telepon'    => 'nullable|string|max:20',
-            'jabatan_id'    => 'nullable|exists:jabatan,id',
-            'unit_kerja_id' => 'nullable|exists:unit_kerja,id',
-            'status'        => 'required|in:aktif,nonaktif',
+            'nip'                => 'required|string|max:20|unique:pegawai,nip,' . $pegawai->id,
+            'nama'               => 'required|string|max:100',
+            'email'              => 'nullable|email|max:100|unique:pegawai,email,' . $pegawai->id,
+            'no_telepon'         => 'nullable|string|max:20',
+            'jabatan_id'         => 'nullable|exists:jabatan,id',
+            'unit_kerja_id'      => 'nullable|exists:unit_kerja,id',
+            'atasan_langsung_id' => 'nullable|exists:pegawai,id|different:id',
+            'status'             => 'required|in:aktif,nonaktif',
         ], [
-            'nip.unique'   => 'NIP sudah digunakan pegawai lain.',
-            'email.unique' => 'Email sudah digunakan pegawai lain.',
+            'nip.unique'         => 'NIP sudah digunakan pegawai lain.',
+            'email.unique'       => 'Email sudah digunakan pegawai lain.',
+            'atasan_langsung_id.different' => 'Pegawai tidak bisa menjadi atasan diri sendiri.',
         ]);
 
         DB::transaction(function () use ($request, $pegawai) {
             $pegawai->update([
-                'nip'           => $request->nip,
-                'nama'          => $request->nama,
-                'email'         => $request->email,
-                'no_telepon'    => $request->no_telepon,
-                'jabatan_id'    => $request->jabatan_id,
-                'unit_kerja_id' => $request->unit_kerja_id,
-                'status'        => $request->status,
+                'nip'                => $request->nip,
+                'nama'               => $request->nama,
+                'email'              => $request->email,
+                'no_telepon'         => $request->no_telepon,
+                'jabatan_id'         => $request->jabatan_id,
+                'unit_kerja_id'      => $request->unit_kerja_id,
+                'atasan_langsung_id' => $request->filled('atasan_langsung_id') ? $request->atasan_langsung_id : null,
+                'status'             => $request->status,
             ]);
 
             // Sinkronisasi status ke akun user terkait

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -24,12 +25,19 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
+        // Default ke role 'pegawai' (id=1). Jika belum ada, ambil role pertama yang ada.
+        $roleId = Role::where('slug', 'pegawai')->value('id')
+                  ?? Role::min('id')
+                  ?? 1;
+
         return [
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
-            'remember_token' => Str::random(10),
+            'role_id'            => $roleId,
+            'name'               => fake()->name(),
+            'email'              => fake()->unique()->safeEmail(),
+            'email_verified_at'  => now(),
+            'password'           => static::$password ??= Hash::make('password'),
+            'remember_token'     => Str::random(10),
+            'status'             => 'aktif',
         ];
     }
 
@@ -40,6 +48,26 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    /**
+     * Set role to admin.
+     */
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role_id' => Role::where('slug', 'admin')->value('id') ?? 2,
+        ]);
+    }
+
+    /**
+     * Set role to superadmin.
+     */
+    public function superadmin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role_id' => Role::where('slug', 'superadmin')->value('id') ?? 3,
         ]);
     }
 }

@@ -127,6 +127,13 @@ class CutiService
         $saldoDetail = $this->hitungSaldoFifo($pegawai, $jenisCuti, $jumlahHari);
 
         return DB::transaction(function () use ($pegawai, $data, $jenisCuti, $saldoDetail, $lampiran) {
+            // Tentukan status awal: jika pegawai punya atasan langsung → menunggu_atasan
+            // Jika tidak ada atasan langsung → langsung menunggu_ketua
+            $pegawai->loadMissing('atasanLangsung');
+            $statusAwal = $pegawai->atasan_langsung_id
+                ? 'menunggu_atasan'
+                : 'menunggu_ketua';
+
             // Buat record cuti
             $cuti = Cuti::create([
                 'nomor_pengajuan' => $this->generateNomor(),
@@ -138,11 +145,12 @@ class CutiService
                 'alasan'          => $data['alasan'],
                 'alamat_cuti'     => $data['alamat_cuti'],
                 'no_telepon'      => $data['no_telepon'] ?? null,
-                'status'          => 'diajukan',
+                'status'          => $statusAwal,
+                'tanggal_pengajuan' => now(),
             ]);
 
             // Simpan detail pemakaian saldo (FIFO)
-            // Saldo BELUM dikurangi di sini — dikurangi saat disetujui
+            // Saldo BELUM dikurangi di sini — dikurangi hanya setelah Ketua setujui
             foreach ($saldoDetail as $detail) {
                 CutiSaldoDetail::create([
                     'cuti_id'          => $cuti->id,
@@ -171,7 +179,8 @@ class CutiService
 
     // ─────────────────────────────────────────────────────────
     // BATALKAN PENGAJUAN
-    // Kembalikan saldo jika sebelumnya sudah dikurangi
+    // Pegawai hanya bisa batalkan saat menunggu_atasan (belum diproses atasan)
+    // Saldo tidak perlu dikembalikan karena belum dikurangi
     // ─────────────────────────────────────────────────────────
     public function batalkan(Cuti $cuti): void
     {
@@ -182,7 +191,9 @@ class CutiService
         }
 
         DB::transaction(function () use ($cuti) {
-            // Jika sudah disetujui, kembalikan saldo
+            // Saldo hanya dikurangi setelah Ketua setujui (disetujui),
+            // jadi pembatalan sebelum itu tidak perlu kembalikan saldo.
+            // Jika sudah disetujui penuh dan kemudian dibatalkan → kembalikan saldo
             if ($cuti->isDisetujui()) {
                 $this->kembalikanSaldo($cuti);
             }
