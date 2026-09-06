@@ -60,9 +60,13 @@
                             <input type="date" name="tanggal_mulai" id="tanggalMulai"
                                    value="{{ old('tanggal_mulai') }}"
                                    min="{{ now()->toDateString() }}"
+                                   max="{{ now()->addDays(30)->toDateString() }}"
                                    onchange="hitungHariOtomatis()"
                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500
                                           @error('tanggal_mulai') border-red-400 @enderror">
+                            <p id="infoMinTanggal" class="text-xs text-gray-400 mt-1">
+                                Min. {{ now()->format('d/m/Y') }} &nbsp;|&nbsp; Maks. {{ now()->addDays(30)->format('d/m/Y') }}
+                            </p>
                             @error('tanggal_mulai')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
@@ -223,38 +227,92 @@
     </div>
 
     <script>
-        function handleJenisCuti(select) {
-            const opt = select.options[select.selectedIndex];
-            const perluLampiran = opt.dataset.perluLampiran === '1';
-            const kode = opt.dataset.kode;
+        // Tanggal batas dari server (format YYYY-MM-DD)
+        const TODAY      = '{{ now()->toDateString() }}';
+        const MAX_DATE   = '{{ now()->addDays(30)->toDateString() }}';
+        const H3_MIN     = '{{ now()->addDays(3)->toDateString() }}'; // H+3 = minimal tanggal mulai CT
 
-            // Tampilkan/sembunyikan info H-3
-            document.getElementById('infoH3').classList.toggle('hidden', kode !== 'CT');
+        function formatTanggal(ymd) {
+            // YYYY-MM-DD → DD/MM/YYYY
+            const [y, m, d] = ymd.split('-');
+            return `${d}/${m}/${y}`;
+        }
+
+        function handleJenisCuti(select) {
+            const opt  = select.options[select.selectedIndex];
+            const kode = opt.dataset.kode ?? '';
+            const perluLampiran = opt.dataset.perluLampiran === '1';
+
+            const inputMulai   = document.getElementById('tanggalMulai');
+            const infoMin      = document.getElementById('infoMinTanggal');
+            const infoH3       = document.getElementById('infoH3');
+
+            if (kode === 'CT') {
+                // Cuti Tahunan: min = H+3 dari hari ini
+                inputMulai.min = H3_MIN;
+                infoH3.classList.remove('hidden');
+                infoMin.textContent = `Min. ${formatTanggal(H3_MIN)} (H-3) | Maks. ${formatTanggal(MAX_DATE)}`;
+
+                // Jika tanggal yang sudah dipilih < H3_MIN, reset
+                if (inputMulai.value && inputMulai.value < H3_MIN) {
+                    inputMulai.value = '';
+                    document.getElementById('tanggalSelesai').value = '';
+                    document.getElementById('jumlahHari').value = 0;
+                }
+            } else {
+                // Jenis cuti lain: min = hari ini
+                inputMulai.min = TODAY;
+                infoH3.classList.add('hidden');
+                infoMin.textContent = `Min. ${formatTanggal(TODAY)} | Maks. ${formatTanggal(MAX_DATE)}`;
+            }
 
             // Tampilkan/sembunyikan seksi lampiran
             const seksi = document.getElementById('seksiLampiran');
             const input = document.getElementById('inputLampiran');
             seksi.classList.toggle('hidden', !perluLampiran);
             input.required = perluLampiran;
+
+            // Hitung ulang hari jika tanggal sudah terisi
+            hitungHariOtomatis();
         }
 
         function hitungHariOtomatis() {
             const mulai   = document.getElementById('tanggalMulai').value;
             const selesai = document.getElementById('tanggalSelesai').value;
+            const output  = document.getElementById('jumlahHari');
 
-            if (!mulai || !selesai) return;
-
-            const m = new Date(mulai);
-            const s = new Date(selesai);
-
-            if (s < m) {
-                document.getElementById('jumlahHari').value = 0;
+            if (!mulai || !selesai || selesai < mulai) {
+                output.value = 0;
                 return;
             }
 
-            const diff = Math.floor((s - m) / (1000 * 60 * 60 * 24)) + 1;
-            document.getElementById('jumlahHari').value = diff;
+            // Panggil backend untuk hitung hari kerja (skip weekend + libur)
+            fetch(`{{ route('cuti.hitung-hari') }}?tanggal_mulai=${mulai}&tanggal_selesai=${selesai}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(r => r.json())
+            .then(data => {
+                output.value = data.jumlah_hari ?? 0;
+            })
+            .catch(() => {
+                // Fallback hitung hari kalender jika AJAX gagal
+                const diff = Math.floor((new Date(selesai) - new Date(mulai)) / 86400000) + 1;
+                output.value = diff;
+            });
         }
+
+        // Saat tanggal mulai berubah, update min tanggal selesai
+        document.getElementById('tanggalMulai').addEventListener('change', function () {
+            const selesaiInput = document.getElementById('tanggalSelesai');
+            if (this.value) {
+                selesaiInput.min = this.value;
+                // Reset selesai jika sekarang < mulai
+                if (selesaiInput.value && selesaiInput.value < this.value) {
+                    selesaiInput.value = this.value;
+                }
+            }
+            hitungHariOtomatis();
+        });
 
         // Inisialisasi saat halaman load (jika ada old values)
         document.addEventListener('DOMContentLoaded', () => {

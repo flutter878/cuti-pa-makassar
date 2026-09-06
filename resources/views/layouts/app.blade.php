@@ -70,8 +70,10 @@
                 <x-sidebar-link route="pengguna.index" icon="shield-check">Pengguna</x-sidebar-link>
 
                 <p class="px-3 pt-4 pb-1 text-xs font-semibold text-blue-400 uppercase tracking-wider">Cuti</p>
-                <x-sidebar-link route="persetujuan.index" icon="clipboard-check">Pengajuan Cuti</x-sidebar-link>
-                <x-sidebar-link route="saldo-cuti.index"  icon="calculator">Saldo Cuti</x-sidebar-link>
+                <x-sidebar-link route="admin-verifikasi.index" icon="clipboard-check">Verifikasi Cuti</x-sidebar-link>
+                <x-sidebar-link route="persetujuan.index"      icon="document-text">Monitor Pengajuan</x-sidebar-link>
+                <x-sidebar-link route="saldo-cuti.index"       icon="calculator">Saldo Cuti</x-sidebar-link>
+                <x-sidebar-link route="hari-libur.index"       icon="calendar">Hari Libur</x-sidebar-link>
 
                 <p class="px-3 pt-4 pb-1 text-xs font-semibold text-blue-400 uppercase tracking-wider">Laporan</p>
                 <x-sidebar-link route="laporan.cuti"   icon="chart-bar">Laporan Cuti</x-sidebar-link>

@@ -1,9 +1,12 @@
 <?php
 
+use App\Http\Controllers\AdminVerifikasiController;
 use App\Http\Controllers\CutiController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\HariLiburController;
 use App\Http\Controllers\JabatanController;
 use App\Http\Controllers\JenisCutiController;
+use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\PenggunaController;
 use App\Http\Controllers\PegawaiController;
 use App\Http\Controllers\PersetujuanCutiController;
@@ -45,15 +48,24 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/cuti/{cuti}', [CutiController::class, 'destroy'])->name('cuti.destroy');
         Route::get('/cuti/{cuti}/lampiran/{dokumen}', [CutiController::class, 'downloadLampiran'])->name('cuti.download');
         Route::get('/cuti/hitung-hari', [CutiController::class, 'hitungHari'])->name('cuti.hitung-hari');
+    });
 
-        // Persetujuan untuk Panitera, Sekretaris, dan Ketua (role=pegawai tapi jabatan khusus)
-        Route::get('/persetujuan', [PersetujuanCutiController::class, 'index'])->name('persetujuan.index');
-        Route::get('/persetujuan/{cuti}', [PersetujuanCutiController::class, 'show'])->name('persetujuan.show');
+    // --------------------------------------------------------
+    // PERSETUJUAN — semua role (pegawai approver, admin, superadmin)
+    // Akses dikendalikan di dalam controller berdasarkan jabatan/role
+    // --------------------------------------------------------
+    Route::get('/persetujuan', [PersetujuanCutiController::class, 'index'])->name('persetujuan.index');
+    Route::get('/persetujuan/{cuti}', [PersetujuanCutiController::class, 'show'])->name('persetujuan.show');
+    Route::middleware(['role:pegawai'])->group(function () {
+        // Aksi approve/reject hanya untuk pegawai dengan jabatan approver
         Route::post('/persetujuan/{cuti}/atasan/setujui', [PersetujuanCutiController::class, 'approveAtasan'])->name('persetujuan.atasan.setujui');
         Route::post('/persetujuan/{cuti}/atasan/tolak',   [PersetujuanCutiController::class, 'rejectAtasan'])->name('persetujuan.atasan.tolak');
         Route::post('/persetujuan/{cuti}/ketua/setujui',  [PersetujuanCutiController::class, 'approveKetua'])->name('persetujuan.ketua.setujui');
         Route::post('/persetujuan/{cuti}/ketua/tolak',    [PersetujuanCutiController::class, 'rejectKetua'])->name('persetujuan.ketua.tolak');
     });
+
+    // Download formulir PDF — bisa diakses semua role
+    Route::get('/cuti/{cuti}/formulir', [LaporanController::class, 'formulirCuti'])->name('cuti.formulir');
 
     // --------------------------------------------------------
     // ADMIN & SUPERADMIN
@@ -76,6 +88,23 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/pengguna/{user}/edit', [PenggunaController::class, 'edit'])->name('pengguna.edit');
         Route::put('/pengguna/{user}', [PenggunaController::class, 'update'])->name('pengguna.update');
         Route::patch('/pengguna/{user}/toggle-status', [PenggunaController::class, 'toggleStatus'])->name('pengguna.toggle-status');
+
+        // Verifikasi Pengajuan Cuti (Admin)
+        Route::get('/admin-verifikasi', [AdminVerifikasiController::class, 'index'])->name('admin-verifikasi.index');
+        Route::get('/admin-verifikasi/{cuti}', [AdminVerifikasiController::class, 'show'])->name('admin-verifikasi.show');
+        Route::post('/admin-verifikasi/{cuti}/verifikasi', [AdminVerifikasiController::class, 'verifikasi'])->name('admin-verifikasi.verifikasi');
+        Route::post('/admin-verifikasi/{cuti}/tolak', [AdminVerifikasiController::class, 'tolak'])->name('admin-verifikasi.tolak');
+
+        // Hari Libur
+        Route::resource('hari-libur', HariLiburController::class)->except(['show']);
+        Route::patch('/hari-libur/{hariLibur}/toggle-aktif', [HariLiburController::class, 'toggleAktif'])->name('hari-libur.toggle');
+
+        // Laporan
+        Route::get('/laporan/pengajuan', [LaporanController::class, 'pengajuan'])->name('laporan.cuti');
+        Route::get('/laporan/pengajuan/export', [LaporanController::class, 'exportPengajuan'])->name('laporan.export-pengajuan');
+        Route::get('/laporan/saldo', [LaporanController::class, 'saldo'])->name('laporan.saldo');
+        Route::get('/laporan/saldo/export', [LaporanController::class, 'exportSaldo'])->name('laporan.export-saldo');
+        Route::get('/laporan/formulir/{cuti}', [LaporanController::class, 'formulirCuti'])->name('laporan.formulir');
     });
 
     // --------------------------------------------------------

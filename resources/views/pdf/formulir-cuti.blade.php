@@ -5,243 +5,369 @@
     <title>Formulir Cuti — {{ $cuti->nomor_pengajuan }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Times New Roman', Times, serif; font-size: 11pt; color: #000; }
+        body { font-family: 'Times New Roman', Times, serif; font-size: 10pt; color: #000; }
 
-        /* Header */
-        .kop { text-align: center; border-bottom: 3px double #000; padding-bottom: 8px; margin-bottom: 14px; }
-        .kop .instansi { font-size: 13pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
-        .kop .alamat { font-size: 9pt; margin-top: 2px; }
+        /* ── Header kanan ── */
+        .header-kanan {
+            text-align: right;
+            font-size: 10pt;
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
 
-        /* Judul */
-        .judul { text-align: center; margin-bottom: 16px; }
-        .judul h2 { font-size: 13pt; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; text-decoration: underline; }
-        .judul .nomor { font-size: 10pt; margin-top: 3px; }
-
-        /* Tabel data */
-        .tabel-data { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
-        .tabel-data td { padding: 4px 6px; vertical-align: top; font-size: 10.5pt; }
-        .tabel-data td.label { width: 38%; }
-        .tabel-data td.titik { width: 3%; text-align: center; }
-        .tabel-data td.nilai { width: 59%; }
-
-        /* Section header */
-        .section-header { font-weight: bold; font-size: 10.5pt; margin: 10px 0 5px 0; text-decoration: underline; }
-
-        /* Tabel persetujuan */
-        .tabel-persetujuan { width: 100%; border-collapse: collapse; margin-top: 18px; }
-        .tabel-persetujuan th, .tabel-persetujuan td {
-            border: 1px solid #000;
-            padding: 6px 8px;
+        /* ── Judul tengah ── */
+        .judul {
             text-align: center;
+            margin-bottom: 6px;
+        }
+        .judul h2 {
+            font-size: 11.5pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .judul .nomor {
+            font-size: 10pt;
+            margin-top: 2px;
+        }
+
+        /* ── Tabel utama ── */
+        .tabel-utama {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 6px;
+        }
+        .tabel-utama td, .tabel-utama th {
+            border: 1px solid #000;
+            padding: 3px 5px;
+            vertical-align: top;
             font-size: 10pt;
         }
-        .tabel-persetujuan th { background: #f0f0f0; font-weight: bold; }
-        .tanda-tangan { height: 60px; }
-
-        /* Status badge */
-        .status-box { display: inline-block; border: 1.5px solid #000; padding: 2px 10px; font-weight: bold; font-size: 10.5pt; }
-
-        /* Footer info */
-        .footer-info { margin-top: 14px; font-size: 9pt; border-top: 1px solid #ccc; padding-top: 8px; color: #555; }
-
-        /* Watermark jika ditolak/dibatalkan */
-        .watermark {
-            position: fixed;
-            top: 35%;
-            left: 15%;
-            font-size: 72pt;
-            color: rgba(200,0,0,0.10);
+        .tabel-utama th {
+            background: #fff;
             font-weight: bold;
-            transform: rotate(-30deg);
-            text-transform: uppercase;
-            z-index: -1;
+            text-align: left;
         }
+        .section-title {
+            font-weight: bold;
+            background: #fff;
+        }
+
+        /* ── Checkbox style ── */
+        .cb-table { width: 100%; border-collapse: collapse; }
+        .cb-table td { border: none; padding: 1px 4px; font-size: 10pt; vertical-align: middle; }
+        .cb { font-size: 12pt; vertical-align: middle; margin-right: 3px; }
+
+        /* ── Tanda tangan ── */
+        .ttd-cell { height: 70px; vertical-align: top; padding: 4px 6px !important; }
+        .ttd-label { font-size: 9pt; text-align: center; margin-bottom: 40px; }
+        .ttd-nama { font-weight: bold; font-size: 9.5pt; }
+        .ttd-nip { font-size: 9pt; }
+
+        /* ── Status persetujuan di baris approval ── */
+        .approved-mark { font-size: 16pt; font-weight: bold; }
     </style>
 </head>
 <body>
 
-@if(in_array($cuti->status, ['ditolak','dibatalkan']))
-    <div class="watermark">{{ strtoupper($cuti->statusLabel()) }}</div>
-@endif
+@php
+    use Carbon\Carbon;
+    $kota     = 'Makassar';
+    $tglCetak = Carbon::now('Asia/Makassar');
 
-{{-- KOP SURAT --}}
-<div class="kop">
-    <div class="instansi">Pengadilan Agama Makassar</div>
-    <div class="alamat">Jl. Masjid Raya No.20, Makassar, Sulawesi Selatan 90111 | Telp. (0411) 3624951</div>
+    // Saldo cuti tahunan (kode CT)
+    $saldoList = [];
+    if ($cuti->jenisCuti->kode === 'CT') {
+        $saldoList = $cuti->pegawai->saldoCuti()
+            ->where('tahun', '<=', $tglCetak->year)
+            ->orderBy('tahun')
+            ->get();
+    }
+
+    // Persetujuan
+    $approvalAtasan = $cuti->persetujuan->where('level', 'atasan')->sortByDesc('tanggal_persetujuan')->first();
+    $approvalKetua  = $cuti->persetujuan->where('level', 'ketua')->sortByDesc('tanggal_persetujuan')->first();
+
+    // Data approver
+    $atasanPegawai = $cuti->pegawai->atasanLangsung;
+
+    // Jenis cuti
+    $jenisList = [
+        'CT'  => '1. Cuti Tahunan',
+        'CB'  => '2. Cuti Besar',
+        'CS'  => '3. Cuti Sakit',
+        'CM'  => '4. Cuti Melahirkan',
+        'CAP' => '5. Cuti Alasan Penting',
+        'CDT' => '6. Cuti diluar Tanggungan Negara',
+    ];
+    $kodeAmbil = $cuti->jenisCuti->kode ?? '';
+
+    // Masa kerja (dari tahun bergabung jika ada, atau kosong)
+    $masaKerja = $cuti->masa_kerja ?? '—';
+
+    // Nomor surat: gunakan nomor_surat resmi jika sudah diisi admin, fallback nomor_pengajuan
+    $nomorSurat = $cuti->nomor_surat ?? $cuti->nomor_pengajuan;
+@endphp
+
+{{-- ══ HEADER KANAN ══ --}}
+<div class="header-kanan">
+    {{ $kota }},&nbsp;&nbsp; {{ $tglCetak->translatedFormat('d F Y') }}<br>
+    Kepada Yth.<br>
+    Ketua Pengadilan Agama Makassar<br>
+    di-<br>
+    Tempat
 </div>
 
-{{-- JUDUL --}}
+{{-- ══ JUDUL ══ --}}
 <div class="judul">
-    <h2>Formulir Permohonan Cuti</h2>
-    <div class="nomor">Nomor: {{ $cuti->nomor_pengajuan }}</div>
+    <h2>Formulir Permintaan dan Pemberian Cuti</h2>
+    <div class="nomor">Nomor :&nbsp; {{ $nomorSurat }}</div>
 </div>
 
-{{-- DATA PEGAWAI --}}
-<div class="section-header">I. Data Pegawai</div>
-<table class="tabel-data">
+{{-- ══ TABEL UTAMA ══ --}}
+<table class="tabel-utama">
+
+    {{-- ─── I. DATA PEGAWAI ─── --}}
     <tr>
-        <td class="label">Nama Lengkap</td>
-        <td class="titik">:</td>
-        <td class="nilai">{{ $cuti->pegawai->nama }}</td>
+        <td colspan="4" class="section-title">I. DATA PEGAWAI</td>
     </tr>
     <tr>
-        <td class="label">NIP</td>
-        <td class="titik">:</td>
-        <td class="nilai">{{ $cuti->pegawai->nip }}</td>
+        <td style="width:15%">Nama</td>
+        <td style="width:35%">{{ $cuti->pegawai->nama }}</td>
+        <td style="width:10%">NIP</td>
+        <td style="width:40%">{{ $cuti->pegawai->nip }}</td>
     </tr>
     <tr>
-        <td class="label">Jabatan</td>
-        <td class="titik">:</td>
-        <td class="nilai">{{ $cuti->pegawai->jabatan?->nama_jabatan ?? '—' }}</td>
+        <td>Jabatan</td>
+        <td>{{ $cuti->pegawai->jabatan?->nama_jabatan ?? '—' }}</td>
+        <td>Masa Kerja</td>
+        <td>{{ $masaKerja }}</td>
     </tr>
     <tr>
-        <td class="label">Unit Kerja</td>
-        <td class="titik">:</td>
-        <td class="nilai">{{ $cuti->pegawai->unitKerja?->nama_unit ?? '—' }}</td>
+        <td>Unit Kerja</td>
+        <td colspan="3">{{ $cuti->pegawai->unitKerja?->nama_unit ?? '—' }}</td>
+    </tr>
+
+    {{-- ─── II. JENIS CUTI ─── --}}
+    <tr>
+        <td colspan="4" class="section-title">II. JENIS CUTI YANG DIAMBIL</td>
     </tr>
     <tr>
-        <td class="label">Atasan Langsung</td>
-        <td class="titik">:</td>
-        <td class="nilai">
-            {{ $cuti->pegawai->atasanLangsung?->nama ?? '—' }}
-            @if($cuti->pegawai->atasanLangsung?->jabatan)
-                ({{ $cuti->pegawai->atasanLangsung->jabatan->nama_jabatan }})
+        <td colspan="2">
+            <span class="cb">{{ $kodeAmbil === 'CT' ? '☑' : '☐' }}</span> 1. Cuti Tahunan
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <span class="cb">{{ $kodeAmbil === 'CB' ? '☑' : '☐' }}</span> 2. Cuti Besar
+        </td>
+        <td colspan="2">
+            &nbsp;
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">
+            <span class="cb">{{ $kodeAmbil === 'CS' ? '☑' : '☐' }}</span> 3. Cuti Sakit
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <span class="cb">{{ $kodeAmbil === 'CM' ? '☑' : '☐' }}</span> 4. Cuti Melahirkan
+        </td>
+        <td colspan="2">&nbsp;</td>
+    </tr>
+    <tr>
+        <td colspan="2">
+            <span class="cb">{{ $kodeAmbil === 'CAP' ? '☑' : '☐' }}</span> 5. Cuti Alasan Penting
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <span class="cb">{{ $kodeAmbil === 'CDT' ? '☑' : '☐' }}</span> 6. Cuti diluar Tanggungan Negara
+        </td>
+        <td colspan="2">&nbsp;</td>
+    </tr>
+
+    {{-- ─── III. ALASAN CUTI ─── --}}
+    <tr>
+        <td colspan="4" class="section-title">III. ALASAN CUTI</td>
+    </tr>
+    <tr>
+        <td colspan="4" style="min-height:30px; padding: 4px 6px;">{{ $cuti->alasan }}</td>
+    </tr>
+
+    {{-- ─── IV. LAMA CUTI ─── --}}
+    <tr>
+        <td colspan="4" class="section-title">IV. LAMANYA CUTI</td>
+    </tr>
+    <tr>
+        <td colspan="4" style="padding: 4px 6px;">
+            Selama &nbsp;&nbsp;
+            <strong>{{ $cuti->jumlah_hari }}</strong>
+            &nbsp;&nbsp; (hari/<del>bulan</del>/<del>tahun</del>) &nbsp;&nbsp;
+            Mulai Tanggal &nbsp;&nbsp;
+            <strong>{{ $cuti->tanggal_mulai->translatedFormat('d F Y') }}</strong>
+            &nbsp;&nbsp; s.d. &nbsp;&nbsp;
+            <strong>{{ $cuti->tanggal_selesai->translatedFormat('d F Y') }}</strong>
+        </td>
+    </tr>
+
+    {{-- ─── V. CATATAN CUTI ─── --}}
+    <tr>
+        <td colspan="4" class="section-title">V. CATATAN CUTI</td>
+    </tr>
+    <tr>
+        {{-- Kolom kiri: catatan saldo tahunan --}}
+        <td colspan="2" style="vertical-align:top; padding: 3px 5px;">
+            <table style="width:100%; border-collapse: collapse; font-size:9.5pt;">
+                <tr>
+                    <td style="border:none; font-weight:bold; padding:1px 3px;" colspan="4">1. Cuti Tahunan</td>
+                    <td style="border:none; text-align:center; font-weight:bold; padding:1px 3px; font-size:9pt;">Paraf<br>Petugas Cuti</td>
+                </tr>
+                <tr>
+                    <td style="border:1px solid #000; padding:2px 4px; text-align:center; font-size:8.5pt; width:18%">Tahun</td>
+                    <td style="border:1px solid #000; padding:2px 4px; text-align:center; font-size:8.5pt; width:18%">Sisa</td>
+                    <td style="border:1px solid #000; padding:2px 4px; text-align:center; font-size:8.5pt; width:40%">Keterangan</td>
+                    <td style="border:none; width:4%"></td>
+                    <td style="border:1px solid #000; padding:2px 4px; text-align:center; font-size:8.5pt; width:20%" rowspan="5">&nbsp;</td>
+                </tr>
+                @forelse($saldoList->take(3) as $saldo)
+                    <tr>
+                        <td style="border:1px solid #000; padding:2px 4px; text-align:center; font-size:8.5pt;">{{ $saldo->tahun }}</td>
+                        <td style="border:1px solid #000; padding:2px 4px; text-align:center; font-size:8.5pt;">{{ $saldo->sisa }}</td>
+                        <td style="border:1px solid #000; padding:2px 4px; font-size:8.5pt;">
+                            {{ $saldo->sisa == 0 ? 'Habis' : ($saldo->sisa < 3 ? 'Hampir Habis' : '') }}
+                        </td>
+                        <td style="border:none;"></td>
+                    </tr>
+                @empty
+                    @for($r = 0; $r < 3; $r++)
+                        <tr>
+                            <td style="border:1px solid #000; padding:2px 4px; text-align:center; font-size:8.5pt;">&nbsp;</td>
+                            <td style="border:1px solid #000; padding:2px 4px; text-align:center; font-size:8.5pt;">&nbsp;</td>
+                            <td style="border:1px solid #000; padding:2px 4px; font-size:8.5pt;">&nbsp;</td>
+                            <td style="border:none;"></td>
+                        </tr>
+                    @endfor
+                @endforelse
+            </table>
+        </td>
+        {{-- Kolom kanan: jenis cuti lainnya --}}
+        <td colspan="2" style="vertical-align:top; padding: 3px 5px; font-size:9.5pt; line-height:1.8;">
+            2. Cuti Besar<br>
+            3. Cuti Sakit<br>
+            4. Cuti Melahirkan<br>
+            5. Cuti Karena Alasan Penting<br>
+            6. Cuti diluar Tanggungan Negara
+        </td>
+    </tr>
+
+    {{-- ─── VI. ALAMAT SELAMA CUTI ─── --}}
+    <tr>
+        <td colspan="4" class="section-title">VI. ALAMAT SELAMA MENJALANKAN CUTI</td>
+    </tr>
+    <tr>
+        {{-- Alamat di kiri, telepon + tanda tangan di kanan --}}
+        <td colspan="2" style="vertical-align:top; min-height:80px; padding:4px 6px;">
+            {{ $cuti->alamat_cuti ?? '—' }}
+        </td>
+        <td colspan="2" style="vertical-align:top; padding:4px 6px;">
+            <strong>TELPON/HP</strong> &nbsp; {{ $cuti->no_telepon ?? '—' }}<br><br>
+            Hormat Saya,<br><br><br><br>
+            <strong>{{ $cuti->pegawai->nama }}</strong><br>
+            NIP. &nbsp; {{ $cuti->pegawai->nip }}
+        </td>
+    </tr>
+
+    {{-- ─── VII. PERTIMBANGAN ATASAN LANGSUNG ─── --}}
+    <tr>
+        <td colspan="4" class="section-title">VII. PERTIMBANGAN ATASAN LANGSUNG</td>
+    </tr>
+    <tr>
+        {{-- Kolom pilihan ─ kiri --}}
+        <td style="text-align:center; width:18%; vertical-align:top; padding:4px;">
+            <strong>DISETUJUI</strong><br>
+            @if($approvalAtasan && $approvalAtasan->status === 'disetujui')
+                <span style="font-size:16pt;">☑</span>
+            @else
+                <span style="font-size:16pt;">☐</span>
+            @endif
+        </td>
+        <td style="text-align:center; width:18%; vertical-align:top; padding:4px;">
+            <strong>PERUBAHAN</strong><br><span style="font-size:16pt;">☐</span>
+        </td>
+        <td style="text-align:center; width:18%; vertical-align:top; padding:4px;">
+            <strong>DITANGGUHKAN</strong><br><span style="font-size:16pt;">☐</span>
+        </td>
+        {{-- Tanda tangan atasan ─ kanan --}}
+        <td style="vertical-align:top; padding:4px 6px;" rowspan="2">
+            {{ $atasanPegawai?->jabatan?->nama_jabatan ?? 'Panitera / Sekretaris' }}<br><br><br><br>
+            <strong>{{ $atasanPegawai?->nama ?? '.......................................' }}</strong><br>
+            NIP. &nbsp; {{ $atasanPegawai?->nip ?? '.......................................' }}
+            @if($approvalAtasan)
+                <br><span style="font-size:8pt;color:#555;">{{ $approvalAtasan->tanggal_persetujuan?->format('d/m/Y') }}</span>
             @endif
         </td>
     </tr>
-</table>
-
-{{-- DATA CUTI --}}
-<div class="section-header">II. Data Permohonan Cuti</div>
-<table class="tabel-data">
     <tr>
-        <td class="label">Jenis Cuti</td>
-        <td class="titik">:</td>
-        <td class="nilai"><strong>{{ $cuti->jenisCuti->nama }}</strong></td>
-    </tr>
-    <tr>
-        <td class="label">Tanggal Mulai</td>
-        <td class="titik">:</td>
-        <td class="nilai">{{ $cuti->tanggal_mulai->translatedFormat('d F Y') }}</td>
-    </tr>
-    <tr>
-        <td class="label">Tanggal Selesai</td>
-        <td class="titik">:</td>
-        <td class="nilai">{{ $cuti->tanggal_selesai->translatedFormat('d F Y') }}</td>
-    </tr>
-    <tr>
-        <td class="label">Lama Cuti</td>
-        <td class="titik">:</td>
-        <td class="nilai"><strong>{{ $cuti->jumlah_hari }} hari kerja</strong></td>
-    </tr>
-    <tr>
-        <td class="label">Tanggal Pengajuan</td>
-        <td class="titik">:</td>
-        <td class="nilai">{{ $cuti->tanggal_pengajuan->translatedFormat('d F Y') }}</td>
-    </tr>
-    <tr>
-        <td class="label">Alasan Cuti</td>
-        <td class="titik">:</td>
-        <td class="nilai">{{ $cuti->alasan }}</td>
-    </tr>
-    <tr>
-        <td class="label">Alamat Selama Cuti</td>
-        <td class="titik">:</td>
-        <td class="nilai">{{ $cuti->alamat_cuti }}</td>
-    </tr>
-    @if($cuti->no_telepon)
-    <tr>
-        <td class="label">No. Telepon</td>
-        <td class="titik">:</td>
-        <td class="nilai">{{ $cuti->no_telepon }}</td>
-    </tr>
-    @endif
-    <tr>
-        <td class="label">Status Permohonan</td>
-        <td class="titik">:</td>
-        <td class="nilai">
-            <span class="status-box">{{ strtoupper($cuti->statusLabel()) }}</span>
+        <td colspan="3" style="text-align:center; vertical-align:top; padding:4px;">
+            <strong>TIDAK DISETUJUI</strong><br>
+            @if($approvalAtasan && $approvalAtasan->status === 'ditolak')
+                <span style="font-size:16pt;">☑</span>
+                @if($approvalAtasan->catatan)
+                    <br><span style="font-size:8.5pt;">{{ $approvalAtasan->catatan }}</span>
+                @endif
+            @else
+                <span style="font-size:16pt;">☐</span>
+            @endif
         </td>
     </tr>
+
+    {{-- ─── VIII. KEPUTUSAN PEJABAT ─── --}}
+    <tr>
+        <td colspan="4" class="section-title">VIII. KEPUTUSAN PEJABAT YANG BERWENANG MEMBERIKAN CUTI</td>
+    </tr>
+    <tr>
+        <td style="text-align:center; vertical-align:top; padding:4px;">
+            <strong>DISETUJUI</strong><br>
+            @if($approvalKetua && $approvalKetua->status === 'disetujui')
+                <span style="font-size:16pt;">☑</span>
+            @else
+                <span style="font-size:16pt;">☐</span>
+            @endif
+        </td>
+        <td style="text-align:center; vertical-align:top; padding:4px;">
+            <strong>PERUBAHAN</strong><br><span style="font-size:16pt;">☐</span>
+        </td>
+        <td style="text-align:center; vertical-align:top; padding:4px;">
+            <strong>DITANGGUHKAN</strong><br><span style="font-size:16pt;">☐</span>
+        </td>
+        {{-- Tanda tangan Ketua ─ kanan --}}
+        <td style="vertical-align:top; padding:4px 6px;" rowspan="2">
+            @php
+                $ketuaPegawai = null;
+                if ($approvalKetua) {
+                    $ketuaPegawai = $approvalKetua->user?->pegawai;
+                }
+            @endphp
+            Ketua<br><br><br><br>
+            <strong>{{ $ketuaPegawai?->nama ?? $approvalKetua?->user?->name ?? '.......................................' }}</strong><br>
+            NIP. &nbsp; {{ $ketuaPegawai?->nip ?? '.......................................' }}
+            @if($approvalKetua)
+                <br><span style="font-size:8pt;color:#555;">{{ $approvalKetua->tanggal_persetujuan?->format('d/m/Y') }}</span>
+            @endif
+        </td>
+    </tr>
+    <tr>
+        <td colspan="3" style="text-align:center; vertical-align:top; padding:4px;">
+            <strong>TIDAK DISETUJUI</strong><br>
+            @if($approvalKetua && $approvalKetua->status === 'ditolak')
+                <span style="font-size:16pt;">☑</span>
+                @if($approvalKetua->catatan)
+                    <br><span style="font-size:8.5pt;">{{ $approvalKetua->catatan }}</span>
+                @endif
+            @else
+                <span style="font-size:16pt;">☐</span>
+            @endif
+        </td>
+    </tr>
+
 </table>
 
-{{-- TANDA TANGAN PERSETUJUAN --}}
-<div class="section-header">III. Persetujuan</div>
-
-@php
-    $approvalAtasan = $cuti->persetujuan->where('level', 'atasan')->sortByDesc('tanggal_persetujuan')->first();
-    $approvalKetua  = $cuti->persetujuan->where('level', 'ketua')->sortByDesc('tanggal_persetujuan')->first();
-@endphp
-
-<table class="tabel-persetujuan">
-    <thead>
-        <tr>
-            <th style="width:33%">Pemohon</th>
-            <th style="width:33%">
-                Atasan Langsung<br>
-                <span style="font-weight:normal;font-size:9pt">
-                    ({{ $cuti->pegawai->atasanLangsung?->jabatan?->nama_jabatan ?? 'Panitera / Sekretaris' }})
-                </span>
-            </th>
-            <th style="width:34%">Ketua<br><span style="font-weight:normal;font-size:9pt">Pengadilan Agama Makassar</span></th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td class="tanda-tangan"></td>
-            <td class="tanda-tangan">
-                @if($approvalAtasan)
-                    <div style="font-size:8.5pt;color:#555;text-align:center;margin-top:4px;">
-                        {{ $approvalAtasan->statusLabel() }}<br>
-                        {{ $approvalAtasan->tanggal_persetujuan?->format('d/m/Y') }}
-                    </div>
-                @endif
-            </td>
-            <td class="tanda-tangan">
-                @if($approvalKetua)
-                    <div style="font-size:8.5pt;color:#555;text-align:center;margin-top:4px;">
-                        {{ $approvalKetua->statusLabel() }}<br>
-                        {{ $approvalKetua->tanggal_persetujuan?->format('d/m/Y') }}
-                    </div>
-                @endif
-            </td>
-        </tr>
-        <tr>
-            <td style="padding-top:4px;">
-                <strong>{{ $cuti->pegawai->nama }}</strong><br>
-                <span style="font-size:9pt">NIP. {{ $cuti->pegawai->nip }}</span>
-            </td>
-            <td style="padding-top:4px;">
-                <strong>{{ $cuti->pegawai->atasanLangsung?->nama ?? '...........................' }}</strong><br>
-                <span style="font-size:9pt">
-                    NIP. {{ $cuti->pegawai->atasanLangsung?->nip ?? '...........................' }}
-                </span>
-            </td>
-            <td style="padding-top:4px;">
-                @if($approvalKetua)
-                    <strong>{{ $approvalKetua->user->name }}</strong><br>
-                    <span style="font-size:9pt">NIP. {{ $approvalKetua->user->pegawai?->nip ?? '—' }}</span>
-                @else
-                    <strong>.................................</strong><br>
-                    <span style="font-size:9pt">NIP. .................................</span>
-                @endif
-            </td>
-        </tr>
-    </tbody>
-</table>
-
-{{-- CATATAN PENOLAKAN --}}
-@if($cuti->catatan && $cuti->status === 'ditolak')
-    <div style="margin-top:12px;padding:8px 10px;border:1px solid #c00;background:#fff5f5;font-size:9.5pt;">
-        <strong>Catatan Penolakan:</strong> {{ $cuti->catatan }}
-    </div>
-@endif
-
-{{-- FOOTER --}}
-<div class="footer-info">
-    Dicetak: {{ now()->translatedFormat('d F Y, H:i') }} WIT &nbsp;|&nbsp;
-    Dokumen ini dicetak secara sistem &nbsp;|&nbsp;
-    Sistem Informasi Cuti — Pengadilan Agama Makassar
+{{-- Footer --}}
+<div style="font-size: 8pt; color:#555; text-align:right; margin-top:4px;">
+    Dicetak: {{ $tglCetak->format('d/m/Y H:i') }} WIT &nbsp;|&nbsp; Sistem Informasi Cuti — Pengadilan Agama Makassar
 </div>
 
 </body>

@@ -1,6 +1,6 @@
 <x-app-layout title="Detail Pengajuan Cuti">
 
-    <div class="mb-4 flex items-center justify-between">
+    <div class="mb-4 flex items-center justify-between flex-wrap gap-3">
         <a href="{{ route('cuti.index') }}" class="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
@@ -8,17 +8,29 @@
             Kembali ke Riwayat
         </a>
 
-        {{-- Tombol batal --}}
-        @if($cuti->bisaDibatalkan())
-            <form method="POST" action="{{ route('cuti.destroy', $cuti) }}"
-                  onsubmit="return confirm('Yakin ingin membatalkan pengajuan ini?')">
-                @csrf @method('DELETE')
-                <button type="submit"
-                        class="inline-flex items-center gap-2 border border-red-300 text-red-600 hover:bg-red-50 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-                    Batalkan Pengajuan
-                </button>
-            </form>
-        @endif
+        <div class="flex items-center gap-2">
+            {{-- Tombol Download PDF --}}
+            <a href="{{ route('cuti.formulir', $cuti) }}" target="_blank"
+               class="inline-flex items-center gap-2 border border-red-300 text-red-600 hover:bg-red-50 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                Download Formulir
+            </a>
+
+            {{-- Tombol batal --}}
+            @if($cuti->bisaDibatalkan())
+                <form method="POST" action="{{ route('cuti.destroy', $cuti) }}"
+                      onsubmit="return confirm('Yakin ingin membatalkan pengajuan ini?')">
+                    @csrf @method('DELETE')
+                    <button type="submit"
+                            class="inline-flex items-center gap-2 border border-gray-300 text-gray-600 hover:bg-gray-50 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+                        Batalkan Pengajuan
+                    </button>
+                </form>
+            @endif
+        </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">

@@ -45,7 +45,7 @@ class PersetujuanCutiController extends Controller
             if ($pegawaiLogin->isKetua()) {
                 // Ketua lihat yang menunggu ketuanya + yang sudah final
                 $query->where(function ($q) {
-                    $q->whereIn('status', ['menunggu_ketua', 'disetujui', 'ditolak']);
+                    $q->whereIn('status', ['menunggu_persetujuan_ketua', 'disetujui', 'ditolak']);
                 });
             } elseif ($pegawaiLogin->isAtasanLangsung()) {
                 // Atasan lihat bawahan langsungnya
@@ -137,7 +137,7 @@ class PersetujuanCutiController extends Controller
         }
 
         DB::transaction(function () use ($cuti, $pegawaiLogin) {
-            $cuti->update(['status' => 'menunggu_ketua']);
+            $cuti->update(['status' => 'menunggu_persetujuan_ketua']);
 
             PersetujuanCuti::create([
                 'cuti_id'            => $cuti->id,
