@@ -43,11 +43,11 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:pegawai'])->group(function () {
         Route::get('/cuti', [CutiController::class, 'index'])->name('cuti.index');
         Route::get('/cuti/ajukan', [CutiController::class, 'create'])->name('cuti.create');
+        Route::get('/cuti/hitung-hari', [CutiController::class, 'hitungHari'])->name('cuti.hitung-hari');
         Route::post('/cuti', [CutiController::class, 'store'])->name('cuti.store');
         Route::get('/cuti/{cuti}', [CutiController::class, 'show'])->name('cuti.show');
         Route::delete('/cuti/{cuti}', [CutiController::class, 'destroy'])->name('cuti.destroy');
         Route::get('/cuti/{cuti}/lampiran/{dokumen}', [CutiController::class, 'downloadLampiran'])->name('cuti.download');
-        Route::get('/cuti/hitung-hari', [CutiController::class, 'hitungHari'])->name('cuti.hitung-hari');
     });
 
     // --------------------------------------------------------
