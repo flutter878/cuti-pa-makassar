@@ -23,9 +23,8 @@
 
         {{-- Logo --}}
         <div class="flex items-center gap-3 px-5 py-[18px] border-b border-blue-800/60">
-            <div class="w-9 h-9 bg-yellow-400 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
-                <span class="text-blue-900 font-bold text-sm">PA</span>
-            </div>
+            <img src="{{ asset('images/logo-pa.png') }}" alt="Logo PA Makassar"
+                 class="w-10 h-12 object-contain flex-shrink-0">
             <div class="leading-tight">
                 <p class="font-bold text-sm text-white">Sistem Cuti</p>
                 <p class="text-blue-300 text-xs">PA Makassar</p>
