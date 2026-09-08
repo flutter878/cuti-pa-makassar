@@ -71,7 +71,7 @@ class AdminVerifikasiController extends Controller
         }
 
         $request->validate([
-            'nomor_awal' => 'required|string|max:20|regex:/^\d+$/',
+            'nomor_awal' => ['required', 'string', 'max:20', 'regex:/^[\d]+$/'],
             'masa_kerja' => 'required|string|max:50',
         ], [
             'nomor_awal.required' => 'Nomor surat wajib diisi.',

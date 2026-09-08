@@ -21,7 +21,7 @@ class PersetujuanCutiController extends Controller
     // ─────────────────────────────────────────────────────────
     private function pegawaiLogin(): ?Pegawai
     {
-        return Auth::user()->pegawai?->load('jabatan');
+        return Auth::user()->pegawai?->loadMissing('jabatan');
     }
 
     // ─────────────────────────────────────────────────────────
@@ -100,7 +100,7 @@ class PersetujuanCutiController extends Controller
             // - status cuti sedang menunggu_atasan
             $bisaApproveAtasan = $cuti->bisaDiprosesAtasan()
                 && $pegawaiLogin->isAtasanLangsung()
-                && $cuti->pegawai->atasan_langsung_id === $pegawaiLogin->id;
+                && (int) $cuti->pegawai->atasan_langsung_id === (int) $pegawaiLogin->id;
 
             // Bisa approve sebagai Ketua jika jabatannya Ketua & status menunggu_ketua
             $bisaApproveKetua = $cuti->bisaDiprosesKetua()

@@ -40,11 +40,11 @@
         <div class="flex items-center gap-2 flex-wrap">
             @php
                 $steps = [
-                    ['key' => 'menunggu_atasan', 'label' => 'Atasan Langsung', 'sub' => 'Panitera / Sekretaris'],
-                    ['key' => 'menunggu_ketua',  'label' => 'Ketua',            'sub' => 'Persetujuan Final'],
-                    ['key' => 'disetujui',        'label' => 'Disetujui',        'sub' => 'Saldo Dikurangi'],
+                    ['key' => 'menunggu_persetujuan_atasan', 'label' => 'Atasan Langsung', 'sub' => 'Panitera / Sekretaris'],
+                    ['key' => 'menunggu_persetujuan_ketua',  'label' => 'Ketua',            'sub' => 'Persetujuan Final'],
+                    ['key' => 'disetujui',                   'label' => 'Disetujui',        'sub' => 'Saldo Dikurangi'],
                 ];
-                $statusOrder = ['menunggu_atasan' => 0, 'menunggu_ketua' => 1, 'disetujui' => 2];
+                $statusOrder = ['menunggu_persetujuan_atasan' => 0, 'menunggu_persetujuan_ketua' => 1, 'disetujui' => 2];
                 $currentIdx  = $statusOrder[$cuti->status] ?? -1;
                 $isTerminal  = in_array($cuti->status, ['ditolak', 'dibatalkan']);
             @endphp
@@ -207,7 +207,23 @@
         <div class="space-y-5">
 
             {{-- ═══ PANEL ATASAN LANGSUNG ═══ --}}
-            @if($bisaApproveAtasan)
+        {{-- DEBUG SEMENTARA --}}
+        @if(config('app.debug'))
+        <div class="bg-yellow-50 border border-yellow-300 rounded p-3 text-xs mb-3 font-mono">
+            bisaApproveAtasan: {{ $bisaApproveAtasan ? 'TRUE' : 'FALSE' }}<br>
+            bisaApproveKetua: {{ $bisaApproveKetua ? 'TRUE' : 'FALSE' }}<br>
+            status cuti: {{ $cuti->status }}<br>
+            bisaDiprosesAtasan(): {{ $cuti->bisaDiprosesAtasan() ? 'TRUE' : 'FALSE' }}<br>
+            @if($pegawaiLogin)
+            pegawaiLogin id: {{ $pegawaiLogin->id }}<br>
+            pegawaiLogin jabatan: {{ $pegawaiLogin->jabatan?->nama_jabatan ?? 'NULL' }}<br>
+            isAtasanLangsung(): {{ $pegawaiLogin->isAtasanLangsung() ? 'TRUE' : 'FALSE' }}<br>
+            atasan_langsung_id pegawai: {{ $cuti->pegawai->atasan_langsung_id ?? 'NULL' }}<br>
+            match: {{ (int)$cuti->pegawai->atasan_langsung_id === (int)$pegawaiLogin->id ? 'TRUE' : 'FALSE' }}
+            @endif
+        </div>
+        @endif
+        @if($bisaApproveAtasan)
                 <div class="bg-white rounded-xl border-2 border-yellow-200 shadow-sm p-5">
                     <div class="flex items-center gap-2 mb-4">
                         <div class="w-7 h-7 rounded-full bg-yellow-100 flex items-center justify-center">
@@ -375,11 +391,11 @@
             @endif
 
             {{-- Info untuk admin (monitoring) --}}
-            @if($isAdmin && !$bisaApproveAtasan && !$bisaApproveKetua && in_array($cuti->status, ['menunggu_atasan','menunggu_ketua']))
+            @if($isAdmin && !$bisaApproveAtasan && !$bisaApproveKetua && in_array($cuti->status, ['menunggu_persetujuan_atasan','menunggu_persetujuan_ketua']))
                 <div class="bg-gray-50 rounded-xl border border-gray-200 p-4">
                     <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Mode Monitor</p>
                     <p class="text-xs text-gray-400">
-                        @if($cuti->status === 'menunggu_atasan')
+                        @if($cuti->status === 'menunggu_persetujuan_atasan')
                             Menunggu persetujuan dari
                             <strong>{{ $cuti->pegawai->atasanLangsung?->nama ?? 'atasan langsung' }}</strong>.
                         @else

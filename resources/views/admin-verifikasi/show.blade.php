@@ -151,8 +151,8 @@
         {{-- ── Kolom kanan: form verifikasi + lampiran ─────── --}}
         <div class="space-y-4">
 
-            {{-- Form Verifikasi (hanya muncul jika masih menunggu) --}}
-            @if($cuti->bisaDiprosesAdmin())
+            {{-- Form Verifikasi (hanya muncul jika masih menunggu, atau saat ada error validasi) --}}
+            @if($cuti->bisaDiprosesAdmin() || ($errors->any() && !$cuti->isDisetujui() && !$cuti->isDitolak() && !$cuti->isDibatalkan()))
                 <div class="bg-white rounded-lg shadow-sm border border-blue-200 p-5">
                     <h3 class="text-sm font-semibold text-blue-800 mb-4 flex items-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -162,7 +162,7 @@
                         Form Verifikasi Admin
                     </h3>
 
-                    <form method="POST" action="{{ route('admin-verifikasi.verifikasi', $cuti) }}">
+                    <form id="formVerifikasi" method="POST" action="{{ route('admin-verifikasi.verifikasi', $cuti) }}">
                         @csrf
 
                         {{-- Nomor Surat --}}
@@ -170,12 +170,12 @@
                             <label class="block text-xs font-medium text-gray-700 mb-1">
                                 Nomor Awal Surat <span class="text-red-500">*</span>
                             </label>
-                            <div class="flex items-center gap-2">
-                                <input type="text" name="nomor_awal" value="{{ old('nomor_awal') }}"
-                                       placeholder="444"
-                                       class="w-24 text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 @error('nomor_awal') border-red-400 @enderror">
-                                <span class="text-xs text-gray-500">/KPA/SKET.KP4.3/{{ \Carbon\Carbon::now()->locale('id')->isoFormat('MMMM') }}/{{ now()->year }}</span>
-                            </div>
+                            <input type="text" name="nomor_awal" value="{{ old('nomor_awal') }}"
+                                   placeholder="444"
+                                   class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 @error('nomor_awal') border-red-400 @enderror">
+                            <p class="text-xs text-gray-500 mt-1">
+                                /KPA/SKET.KP4.3/{{ \Carbon\Carbon::now()->locale('id')->isoFormat('MMMM') }}/{{ now()->year }}
+                            </p>
                             <p class="text-xs text-gray-400 mt-1">
                                 Preview: <span id="previewNomor" class="font-medium text-gray-600">—</span>
                             </p>
@@ -185,7 +185,7 @@
                         </div>
 
                         {{-- Masa Kerja --}}
-                        <div class="mb-5">
+                        <div class="mb-4">
                             <label class="block text-xs font-medium text-gray-700 mb-1">
                                 Masa Kerja <span class="text-red-500">*</span>
                             </label>
@@ -196,20 +196,27 @@
                                 <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                             @enderror
                         </div>
-
-                        <button type="submit"
-                                class="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 rounded-lg transition-colors">
-                            Verifikasi & Teruskan
-                        </button>
                     </form>
 
+                    {{-- Button Verifikasi di luar form tapi terhubung via form="formVerifikasi" --}}
+                    <div class="mt-2 mb-3">
+                        <button type="submit" form="formVerifikasi"
+                                style="background-color:#1d4ed8; color:#ffffff; width:100%; padding:10px; border-radius:8px; font-size:14px; font-weight:600; border:none; cursor:pointer;">
+                            ✓ Verifikasi &amp; Teruskan
+                        </button>
+                    </div>
+
                     {{-- Divider --}}
-                    <div class="my-3 border-t border-gray-100"></div>
+                    <div class="my-3 flex items-center gap-2">
+                        <div class="flex-1 border-t border-gray-200"></div>
+                        <span class="text-xs text-gray-400">atau</span>
+                        <div class="flex-1 border-t border-gray-200"></div>
+                    </div>
 
                     {{-- Tombol Tolak --}}
                     <button onclick="document.getElementById('modalTolak').classList.remove('hidden')"
-                            class="w-full border border-red-300 text-red-600 hover:bg-red-50 text-sm font-medium py-2 rounded-lg transition-colors">
-                        Tolak Pengajuan
+                            class="w-full border border-red-300 text-red-600 hover:bg-red-50 text-sm font-medium py-2.5 rounded-lg transition-colors">
+                        ✕ Tolak Pengajuan
                     </button>
                 </div>
 
