@@ -114,25 +114,27 @@
                 </label>
             </div>
 
-            <div id="formAkun" class="{{ old('buat_akun') ? '' : 'hidden' }} grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Email Login <span class="text-red-500">*</span></label>
-                    <input type="email" name="email_login" value="{{ old('email_login') }}"
-                           class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 @error('email_login') border-red-400 @enderror">
-                    @error('email_login')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+            <div id="formAkun" class="{{ old('buat_akun') ? '' : 'hidden' }} space-y-4">
+
+                {{-- Info otomatis --}}
+                <div class="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                    <svg class="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <div class="text-xs text-blue-700">
+                        <p class="font-semibold mb-0.5">Login pertama menggunakan NIP</p>
+                        <p>Username: <strong>NIP pegawai</strong> &bull; Password: <strong>NIP pegawai</strong></p>
+                        <p class="mt-0.5 text-blue-500">Pegawai dapat mengubah password setelah login pertama.</p>
+                    </div>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Password <span class="text-red-500">*</span></label>
-                    <input type="password" name="password"
-                           class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 @error('password') border-red-400 @enderror"
-                           placeholder="Min. 8 karakter">
-                    @error('password')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Role <span class="text-red-500">*</span></label>
-                    <select name="role_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <div class="max-w-xs">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Role <span class="text-red-500">*</span>
+                    </label>
+                    <select name="role_id"
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="">— Pilih Role —</option>
                         @foreach(\App\Models\Role::orderBy('name')->get() as $role)
                             <option value="{{ $role->id }}" {{ old('role_id') == $role->id ? 'selected' : '' }}>
@@ -140,7 +142,9 @@
                             </option>
                         @endforeach
                     </select>
-                    @error('role_id')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                    @error('role_id')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
             </div>
         </x-form-card>

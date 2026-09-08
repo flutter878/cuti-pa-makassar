@@ -1,6 +1,7 @@
+
 # PROGRESS — Sistem Informasi Cuti PA Makassar
 
-> Terakhir diperbarui: 2026-09-03
+> Terakhir diperbarui: 2026-09-04 (Revisi Alur & Fitur)
 
 ---
 
@@ -12,7 +13,8 @@
 | Tahap 2 | Data Master (Pegawai, Jabatan, Unit Kerja, Jenis Cuti, Saldo) | ✅ Selesai |
 | Tahap 3 | Pengajuan Cuti (Form, Validasi H-3, FIFO, Upload) | ✅ Selesai |
 | Tahap 4 | Persetujuan (2 Level: Atasan → Ketua) | ✅ Selesai |
-| Tahap 5 | Dokumen & Laporan (PDF, Filter, Export) | ⏳ Belum Mulai |
+| Tahap 5 | Dokumen & Laporan (PDF, Filter, Export) | ✅ Selesai |
+| Revisi | Alur 4 Tahap, Nomor Surat, Hari Kerja, Hari Libur, Batas 30 Hari | ✅ Selesai |
 | Tahap 6 | Pengujian Menyeluruh | ⏳ Belum Mulai |
 
 ---
@@ -109,13 +111,60 @@
 | # | Task | Status | Keterangan |
 |---|---|---|---|
 | 5.1 | Install DomPDF | ✅ Selesai | `barryvdh/laravel-dompdf` sudah di vendor |
-| 5.2 | Template PDF formulir cuti | ⏳ Belum | sesuai format resmi PA Makassar |
-| 5.3 | Generate & download PDF per pengajuan | ⏳ Belum | |
-| 5.4 | Halaman laporan pengajuan (admin) | ⏳ Belum | |
-| 5.5 | Filter laporan (tahun, bulan, jenis, status, pegawai) | ⏳ Belum | |
-| 5.6 | Halaman laporan saldo cuti (admin) | ⏳ Belum | |
-| 5.7 | Export laporan ke PDF | ⏳ Belum | |
-| 5.8 | Print laporan dari browser | ⏳ Belum | |
+| 5.2 | Template PDF formulir cuti | ✅ Selesai | 8 section sesuai format resmi PA Makassar |
+| 5.3 | Generate & download PDF per pengajuan | ✅ Selesai | Route `laporan.formulir`, akses admin & pegawai |
+| 5.4 | Halaman laporan pengajuan (admin) | ✅ Selesai | `laporan/pengajuan.blade.php` |
+| 5.5 | Filter laporan (tahun, bulan, jenis, status, pegawai) | ✅ Selesai | 6 filter + cari |
+| 5.6 | Halaman laporan saldo cuti (admin) | ✅ Selesai | `laporan/saldo.blade.php` |
+| 5.7 | Export laporan ke PDF | ✅ Selesai | Export pengajuan (landscape) & saldo (portrait) |
+| 5.8 | Print laporan dari browser | ✅ Selesai | Via tombol Export PDF di setiap laporan |
+
+---
+
+## Revisi Sistem — berdasarkan revisi.md
+
+| # | Item Revisi | Status | Keterangan |
+|---|---|---|---|
+| R.1 | Format nomor surat resmi | ✅ Selesai | `{nomor}/KPA/SKET.KP4.3/{bulan-romawi}/{tahun}`, diisi Admin |
+| R.2 | Tanggal pengajuan otomatis | ✅ Selesai | Sudah ada sejak awal, tidak berubah |
+| R.3 | Masa kerja diisi Admin | ✅ Selesai | Kolom `masa_kerja` di tabel `cuti`, diisi saat verifikasi |
+| R.4 | Alur 4 tahap: Pegawai → Admin → Atasan → Ketua | ✅ Selesai | Status baru: `menunggu_verifikasi_admin` |
+| R.5 | Checkbox ☑/☐ di PDF berdasarkan status DB | ✅ Selesai | Simbol unicode, tidak bisa diklik |
+| R.6 | Checkbox per tahap persetujuan di PDF | ✅ Selesai | Atasan & Ketua masing-masing punya ☑/☐ + nama + tanggal |
+| R.7 | Perhitungan hari kerja (skip Sabtu, Minggu, libur) | ✅ Selesai | `CutiService::hitungHari()` diperbarui |
+| R.8 | Sistem hari libur (CRUD Admin) | ✅ Selesai | Tabel `hari_libur`, model, controller, views, routes |
+| R.9 | Batas pengajuan max 30 hari ke depan | ✅ Selesai | Validasi backend + `max` attribute di form |
+
+### Status Baru Setelah Revisi
+
+| Status | Keterangan |
+|---|---|
+| `menunggu_verifikasi_admin` | Baru diajukan pegawai, menunggu admin |
+| `menunggu_persetujuan_atasan` | Sudah diverifikasi admin, menunggu Panitera/Sekretaris |
+| `menunggu_persetujuan_ketua` | Disetujui atasan, menunggu Ketua |
+| `disetujui` | Disetujui Ketua, saldo dikurangi |
+| `ditolak` | Ditolak (oleh admin, atasan, atau Ketua) |
+| `dibatalkan` | Dibatalkan oleh pegawai |
+
+### Alur Persetujuan Baru (4 Tahap)
+
+```
+Pegawai ajukan cuti
+        ↓
+Status: menunggu_verifikasi_admin
+        ↓
+Admin: isi nomor surat + masa kerja → verifikasi
+  → Verifikasi → menunggu_persetujuan_atasan (atau menunggu_persetujuan_ketua jika tidak ada atasan)
+  → Tolak      → ditolak
+        ↓
+Atasan Langsung (Panitera / Sekretaris)
+  → Setujui → menunggu_persetujuan_ketua
+  → Tolak   → ditolak
+        ↓
+Ketua
+  → Setujui → disetujui + saldo dikurangi
+  → Tolak   → ditolak
+```
 
 ---
 
@@ -162,28 +211,31 @@
 ```
 Pegawai ajukan cuti
         ↓
-Status: menunggu_atasan
+Status: menunggu_verifikasi_admin
+        ↓
+Admin: isi nomor surat + masa kerja → verifikasi
+  → Verifikasi → menunggu_persetujuan_atasan
+  → Tolak      → ditolak
         ↓
 Atasan Langsung (Panitera / Sekretaris)
-  → Setujui → status: menunggu_ketua
-  → Tolak   → status: ditolak (selesai)
-        ↓
-Status: menunggu_ketua
+  → Setujui → menunggu_persetujuan_ketua
+  → Tolak   → ditolak
         ↓
 Ketua
-  → Setujui → status: disetujui + saldo dikurangi
-  → Tolak   → status: ditolak (selesai)
+  → Setujui → disetujui + saldo dikurangi
+  → Tolak   → ditolak
 ```
-- Jika pegawai tidak punya atasan langsung → langsung ke `menunggu_ketua`
+- Jika pegawai tidak punya atasan langsung → setelah admin verifikasi langsung ke `menunggu_persetujuan_ketua`
 - Jabatan approver dikonfigurasi di `config/approver.php`
 
 ### Status Cuti
 | Status | Keterangan |
 |---|---|
-| `menunggu_atasan` | Menunggu persetujuan Panitera/Sekretaris |
-| `menunggu_ketua` | Menunggu persetujuan final Ketua |
+| `menunggu_verifikasi_admin` | Menunggu verifikasi + pengisian nomor surat oleh Admin |
+| `menunggu_persetujuan_atasan` | Sudah diverifikasi Admin, menunggu Panitera/Sekretaris |
+| `menunggu_persetujuan_ketua` | Menunggu persetujuan final Ketua |
 | `disetujui` | Disetujui Ketua, saldo sudah dikurangi |
-| `ditolak` | Ditolak (oleh atasan atau Ketua) |
+| `ditolak` | Ditolak (oleh admin, atasan, atau Ketua) |
 | `dibatalkan` | Dibatalkan oleh pegawai |
 
 ### Role
@@ -249,6 +301,27 @@ Ketua
 | 2026-09-03 | Tahap 4: Sidebar — menu "Pengajuan Masuk" muncul otomatis untuk Panitera/Sekretaris/Ketua |
 | 2026-09-03 | Tahap 4: UserFactory diperbaiki (bug FK role_id) |
 | 2026-09-03 | **Tahap 4 selesai ✅** |
+| 2026-09-04 | Tahap 5: Template PDF formulir cuti 8 section sesuai format resmi PA Makassar |
+| 2026-09-04 | Tahap 5: LaporanController — pengajuan, saldo, exportPengajuan, exportSaldo, formulirCuti |
+| 2026-09-04 | Tahap 5: Views laporan/pengajuan.blade.php + laporan/saldo.blade.php |
+| 2026-09-04 | Tahap 5: PDF templates — formulir-cuti, laporan-pengajuan, laporan-saldo |
+| 2026-09-04 | Tahap 5: Routes laporan (5 routes) + tombol Download Formulir di cuti/show & persetujuan/show |
+| 2026-09-04 | **Tahap 5 selesai ✅** |
+| 2026-09-04 | Revisi: Migration — kolom `nomor_surat`, `masa_kerja` di tabel `cuti` |
+| 2026-09-04 | Revisi: Update enum status cuti — tambah `menunggu_verifikasi_admin`, rename `menunggu_atasan` → `menunggu_persetujuan_atasan`, `menunggu_ketua` → `menunggu_persetujuan_ketua` |
+| 2026-09-04 | Revisi: Migration + Model `HariLibur` — tabel `hari_libur` (tanggal, nama, keterangan, aktif) |
+| 2026-09-04 | Revisi: `CutiService` — hitung hari kerja (skip Sabtu, Minggu, hari libur DB), validasi 30 hari, status awal `menunggu_verifikasi_admin`, method `verifikasiAdmin()` |
+| 2026-09-04 | Revisi: Model `Cuti` — fillable baru, status helpers baru, `bisaDiprosesAdmin()`, `formatNomorSurat()` |
+| 2026-09-04 | Revisi: `AdminVerifikasiController` — index, show, verifikasi (isi nomor surat + masa kerja), tolak |
+| 2026-09-04 | Revisi: Views `admin-verifikasi/index` & `admin-verifikasi/show` (form verifikasi + preview nomor surat) |
+| 2026-09-04 | Revisi: `HariLiburController` + views `hari-libur/index`, `create`, `edit` — CRUD + toggle aktif |
+| 2026-09-04 | Revisi: PDF formulir-cuti — checkbox ☑/☐, tampilkan `nomor_surat` & `masa_kerja` |
+| 2026-09-04 | Revisi: `cuti/create` — tambah `max` date 30 hari ke depan |
+| 2026-09-04 | Revisi: Sidebar admin diperbarui — menu Verifikasi Cuti, Monitor Pengajuan, Hari Libur |
+| 2026-09-04 | Revisi: Icon `calendar` ditambah ke `sidebar-link` component |
+| 2026-09-04 | Revisi: Routes diperbarui — 88 total routes, admin-verifikasi (4), hari-libur (6) |
+| 2026-09-04 | Revisi: `php artisan migrate` berhasil — 2 migration baru dijalankan |
+| 2026-09-04 | **Revisi selesai ✅** |
 
 ---
 

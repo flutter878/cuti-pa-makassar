@@ -21,7 +21,7 @@ class PersetujuanCutiController extends Controller
     // ─────────────────────────────────────────────────────────
     private function pegawaiLogin(): ?Pegawai
     {
-        return Auth::user()->pegawai?->load('jabatan');
+        return Auth::user()->pegawai?->loadMissing('jabatan');
     }
 
     // ─────────────────────────────────────────────────────────
@@ -45,7 +45,7 @@ class PersetujuanCutiController extends Controller
             if ($pegawaiLogin->isKetua()) {
                 // Ketua lihat yang menunggu ketuanya + yang sudah final
                 $query->where(function ($q) {
-                    $q->whereIn('status', ['menunggu_ketua', 'disetujui', 'ditolak']);
+                    $q->whereIn('status', ['menunggu_persetujuan_ketua', 'disetujui', 'ditolak']);
                 });
             } elseif ($pegawaiLogin->isAtasanLangsung()) {
                 // Atasan lihat bawahan langsungnya
@@ -100,7 +100,7 @@ class PersetujuanCutiController extends Controller
             // - status cuti sedang menunggu_atasan
             $bisaApproveAtasan = $cuti->bisaDiprosesAtasan()
                 && $pegawaiLogin->isAtasanLangsung()
-                && $cuti->pegawai->atasan_langsung_id === $pegawaiLogin->id;
+                && (int) $cuti->pegawai->atasan_langsung_id === (int) $pegawaiLogin->id;
 
             // Bisa approve sebagai Ketua jika jabatannya Ketua & status menunggu_ketua
             $bisaApproveKetua = $cuti->bisaDiprosesKetua()
@@ -137,7 +137,7 @@ class PersetujuanCutiController extends Controller
         }
 
         DB::transaction(function () use ($cuti, $pegawaiLogin) {
-            $cuti->update(['status' => 'menunggu_ketua']);
+            $cuti->update(['status' => 'menunggu_persetujuan_ketua']);
 
             PersetujuanCuti::create([
                 'cuti_id'            => $cuti->id,

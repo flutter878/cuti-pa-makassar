@@ -1,10 +1,18 @@
 <x-app-layout title="Detail Pengajuan Cuti">
-    <div class="mb-5">
+    <div class="mb-5 flex items-center justify-between flex-wrap gap-3">
         <a href="{{ route('persetujuan.index') }}" class="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
             </svg>
             Kembali ke Daftar Pengajuan
+        </a>
+        <a href="{{ route('laporan.formulir', $cuti) }}" target="_blank"
+           class="inline-flex items-center gap-2 border border-red-300 text-red-600 hover:bg-red-50 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            Download Formulir PDF
         </a>
     </div>
 
@@ -32,11 +40,11 @@
         <div class="flex items-center gap-2 flex-wrap">
             @php
                 $steps = [
-                    ['key' => 'menunggu_atasan', 'label' => 'Atasan Langsung', 'sub' => 'Panitera / Sekretaris'],
-                    ['key' => 'menunggu_ketua',  'label' => 'Ketua',            'sub' => 'Persetujuan Final'],
-                    ['key' => 'disetujui',        'label' => 'Disetujui',        'sub' => 'Saldo Dikurangi'],
+                    ['key' => 'menunggu_persetujuan_atasan', 'label' => 'Atasan Langsung', 'sub' => 'Panitera / Sekretaris'],
+                    ['key' => 'menunggu_persetujuan_ketua',  'label' => 'Ketua',            'sub' => 'Persetujuan Final'],
+                    ['key' => 'disetujui',                   'label' => 'Disetujui',        'sub' => 'Saldo Dikurangi'],
                 ];
-                $statusOrder = ['menunggu_atasan' => 0, 'menunggu_ketua' => 1, 'disetujui' => 2];
+                $statusOrder = ['menunggu_persetujuan_atasan' => 0, 'menunggu_persetujuan_ketua' => 1, 'disetujui' => 2];
                 $currentIdx  = $statusOrder[$cuti->status] ?? -1;
                 $isTerminal  = in_array($cuti->status, ['ditolak', 'dibatalkan']);
             @endphp
@@ -199,7 +207,7 @@
         <div class="space-y-5">
 
             {{-- ═══ PANEL ATASAN LANGSUNG ═══ --}}
-            @if($bisaApproveAtasan)
+        @if($bisaApproveAtasan)
                 <div class="bg-white rounded-xl border-2 border-yellow-200 shadow-sm p-5">
                     <div class="flex items-center gap-2 mb-4">
                         <div class="w-7 h-7 rounded-full bg-yellow-100 flex items-center justify-center">
@@ -220,11 +228,10 @@
                                       class="w-full border-gray-200 rounded-lg text-xs focus:border-blue-500 focus:ring-blue-500"
                                       placeholder="Catatan persetujuan..."></textarea>
                         </div>
-                        <button type="submit"
-                                onclick="return confirm('Setujui pengajuan ini dan teruskan ke Ketua?')"
-                                class="w-full inline-flex justify-center items-center gap-2 bg-green-600 hover:bg-green-700
-                                       text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <button type="button"
+                                onclick="bukaModal('modalSetujuiAtasan')"
+                                style="width:100%; background-color:#16a34a; color:#ffffff; padding:10px 16px; border-radius:8px; font-size:14px; font-weight:600; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+                            <svg style="width:16px;height:16px;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
                             Setujui → Teruskan ke Ketua
@@ -279,11 +286,10 @@
                                       class="w-full border-gray-200 rounded-lg text-xs focus:border-blue-500 focus:ring-blue-500"
                                       placeholder="Catatan persetujuan..."></textarea>
                         </div>
-                        <button type="submit"
-                                onclick="return confirm('Setujui pengajuan ini secara final? Saldo cuti akan langsung dikurangi.')"
-                                class="w-full inline-flex justify-center items-center gap-2 bg-blue-900 hover:bg-blue-800
-                                       text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <button type="button"
+                                onclick="bukaModal('modalSetujuiKetua')"
+                                style="width:100%; background-color:#1e3a5f; color:#ffffff; padding:10px 16px; border-radius:8px; font-size:14px; font-weight:600; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+                            <svg style="width:16px;height:16px;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
                             Setujui Final
@@ -367,11 +373,11 @@
             @endif
 
             {{-- Info untuk admin (monitoring) --}}
-            @if($isAdmin && !$bisaApproveAtasan && !$bisaApproveKetua && in_array($cuti->status, ['menunggu_atasan','menunggu_ketua']))
+            @if($isAdmin && !$bisaApproveAtasan && !$bisaApproveKetua && in_array($cuti->status, ['menunggu_persetujuan_atasan','menunggu_persetujuan_ketua']))
                 <div class="bg-gray-50 rounded-xl border border-gray-200 p-4">
                     <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Mode Monitor</p>
                     <p class="text-xs text-gray-400">
-                        @if($cuti->status === 'menunggu_atasan')
+                        @if($cuti->status === 'menunggu_persetujuan_atasan')
                             Menunggu persetujuan dari
                             <strong>{{ $cuti->pegawai->atasanLangsung?->nama ?? 'atasan langsung' }}</strong>.
                         @else
@@ -382,4 +388,100 @@
             @endif
         </div>
     </div>
+
+{{-- ═══ MODAL KONFIRMASI SETUJUI ATASAN ═══ --}}
+<div id="modalSetujuiAtasan" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center; padding:16px;">
+    <div style="background:#fff; border-radius:16px; padding:28px; max-width:420px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+            <div style="width:44px; height:44px; background:#dcfce7; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                <svg style="width:22px;height:22px;" fill="none" stroke="#16a34a" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+            </div>
+            <div>
+                <p style="font-size:16px; font-weight:700; color:#111827; margin:0;">Konfirmasi Persetujuan</p>
+                <p style="font-size:13px; color:#6b7280; margin:0;">Atasan Langsung</p>
+            </div>
+        </div>
+        <p style="font-size:14px; color:#374151; margin-bottom:8px;">Anda akan menyetujui pengajuan cuti:</p>
+        <div style="background:#f9fafb; border-radius:8px; padding:12px; margin-bottom:12px; font-size:13px; color:#374151;">
+            <strong>{{ $cuti->pegawai->nama }}</strong><br>
+            {{ $cuti->jenisCuti->nama }} — {{ $cuti->jumlah_hari }} hari<br>
+            {{ $cuti->tanggal_mulai->format('d M Y') }} s/d {{ $cuti->tanggal_selesai->format('d M Y') }}
+        </div>
+        <p style="font-size:13px; color:#6b7280; margin-bottom:20px;">Pengajuan akan diteruskan ke <strong>Ketua</strong> untuk persetujuan final.</p>
+        <div style="display:flex; gap:10px;">
+            <form method="POST" action="{{ route('persetujuan.atasan.setujui', $cuti) }}" style="flex:1;">
+                @csrf
+                <button type="submit"
+                        style="width:100%; background-color:#16a34a; color:#fff; padding:10px; border-radius:8px; font-size:14px; font-weight:600; border:none; cursor:pointer;">
+                    ✓ Ya, Setujui
+                </button>
+            </form>
+            <button type="button" onclick="tutupModal('modalSetujuiAtasan')"
+                    style="flex:1; background:#f3f4f6; color:#374151; padding:10px; border-radius:8px; font-size:14px; font-weight:600; border:none; cursor:pointer;">
+                Batal
+            </button>
+        </div>
+    </div>
+</div>
+
+{{-- ═══ MODAL KONFIRMASI SETUJUI KETUA ═══ --}}
+<div id="modalSetujuiKetua" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center; padding:16px;">
+    <div style="background:#fff; border-radius:16px; padding:28px; max-width:420px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+            <div style="width:44px; height:44px; background:#dbeafe; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                <svg style="width:22px;height:22px;" fill="none" stroke="#1d4ed8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <div>
+                <p style="font-size:16px; font-weight:700; color:#111827; margin:0;">Konfirmasi Persetujuan Final</p>
+                <p style="font-size:13px; color:#6b7280; margin:0;">Ketua</p>
+            </div>
+        </div>
+        <p style="font-size:14px; color:#374151; margin-bottom:8px;">Anda akan menyetujui secara final pengajuan cuti:</p>
+        <div style="background:#f9fafb; border-radius:8px; padding:12px; margin-bottom:12px; font-size:13px; color:#374151;">
+            <strong>{{ $cuti->pegawai->nama }}</strong><br>
+            {{ $cuti->jenisCuti->nama }} — {{ $cuti->jumlah_hari }} hari<br>
+            {{ $cuti->tanggal_mulai->format('d M Y') }} s/d {{ $cuti->tanggal_selesai->format('d M Y') }}
+        </div>
+        <div style="background:#fef9c3; border:1px solid #fde68a; border-radius:8px; padding:10px; margin-bottom:20px; font-size:13px; color:#92400e;">
+            ⚠️ Saldo cuti akan <strong>langsung dikurangi {{ $cuti->jumlah_hari }} hari</strong> setelah disetujui.
+        </div>
+        <div style="display:flex; gap:10px;">
+            <form method="POST" action="{{ route('persetujuan.ketua.setujui', $cuti) }}" style="flex:1;">
+                @csrf
+                <button type="submit"
+                        style="width:100%; background-color:#1e3a5f; color:#fff; padding:10px; border-radius:8px; font-size:14px; font-weight:600; border:none; cursor:pointer;">
+                    ✓ Ya, Setujui Final
+                </button>
+            </form>
+            <button type="button" onclick="tutupModal('modalSetujuiKetua')"
+                    style="flex:1; background:#f3f4f6; color:#374151; padding:10px; border-radius:8px; font-size:14px; font-weight:600; border:none; cursor:pointer;">
+                Batal
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function bukaModal(id) {
+        const el = document.getElementById(id);
+        el.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    function tutupModal(id) {
+        document.getElementById(id).style.display = 'none';
+        document.body.style.overflow = '';
+    }
+    // Tutup modal klik backdrop
+    ['modalSetujuiAtasan','modalSetujuiKetua'].forEach(function(id) {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('click', function(e) {
+            if (e.target === this) tutupModal(id);
+        });
+    });
+</script>
+
 </x-app-layout>

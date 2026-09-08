@@ -23,9 +23,8 @@
 
         {{-- Logo --}}
         <div class="flex items-center gap-3 px-5 py-[18px] border-b border-blue-800/60">
-            <div class="w-9 h-9 bg-yellow-400 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
-                <span class="text-blue-900 font-bold text-sm">PA</span>
-            </div>
+            <img src="{{ asset('images/logo-pa.png') }}" alt="Logo PA Makassar"
+                 class="w-10 h-12 object-contain flex-shrink-0">
             <div class="leading-tight">
                 <p class="font-bold text-sm text-white">Sistem Cuti</p>
                 <p class="text-blue-300 text-xs">PA Makassar</p>
@@ -42,21 +41,23 @@
                 <x-sidebar-link route="cuti.create"  icon="plus-circle">Ajukan Cuti</x-sidebar-link>
                 <x-sidebar-link route="cuti.index"   icon="list">Riwayat Cuti</x-sidebar-link>
 
-                {{-- Menu persetujuan hanya muncul untuk Panitera, Sekretaris, Ketua --}}
+                {{-- Menu Pengajuan Masuk muncul jika user punya approval pending --}}
                 @php
-                    $jabatanUser = auth()->user()->pegawai?->jabatan?->nama_jabatan;
-                    $jabatanApprover = array_merge(
-                        config('approver.jabatan_atasan', []),
-                        config('approver.jabatan_ketua', [])
-                    );
-                    $isApprover = in_array($jabatanUser, $jabatanApprover);
+                    $pendingApproval = \App\Models\ApprovalStage::where('user_id', auth()->id())
+                        ->where('status', 'pending')
+                        ->count();
                 @endphp
-                @if($isApprover)
-                    <div class="pt-2 pb-1">
-                        <p class="px-3 py-1 text-xs font-semibold text-blue-400 uppercase tracking-wider">Persetujuan</p>
-                        <x-sidebar-link route="persetujuan.index" icon="clipboard-check">Pengajuan Masuk</x-sidebar-link>
-                    </div>
-                @endif
+                <div class="pt-2 pb-1">
+                    <p class="px-3 py-1 text-xs font-semibold text-blue-400 uppercase tracking-wider">Approval</p>
+                    <x-sidebar-link route="approval.index" icon="clipboard-check">
+                        Pengajuan Masuk
+                        @if($pendingApproval > 0)
+                            <span class="ml-auto bg-yellow-400 text-yellow-900 text-xs font-bold px-1.5 py-0.5 rounded-full">
+                                {{ $pendingApproval }}
+                            </span>
+                        @endif
+                    </x-sidebar-link>
+                </div>
 
                 <x-sidebar-link route="profile.edit" icon="user">Profil Saya</x-sidebar-link>
             @endif
@@ -70,8 +71,10 @@
                 <x-sidebar-link route="pengguna.index" icon="shield-check">Pengguna</x-sidebar-link>
 
                 <p class="px-3 pt-4 pb-1 text-xs font-semibold text-blue-400 uppercase tracking-wider">Cuti</p>
-                <x-sidebar-link route="persetujuan.index" icon="clipboard-check">Pengajuan Cuti</x-sidebar-link>
-                <x-sidebar-link route="saldo-cuti.index"  icon="calculator">Saldo Cuti</x-sidebar-link>
+                <x-sidebar-link route="admin-verifikasi.index" icon="clipboard-check">Verifikasi & Routing</x-sidebar-link>
+                <x-sidebar-link route="saldo-cuti.index"       icon="calculator">Saldo Cuti</x-sidebar-link>
+                <x-sidebar-link route="hari-libur.index"       icon="calendar">Hari Libur</x-sidebar-link>
+                <x-sidebar-link route="routing-template.index" icon="tag">Template Routing</x-sidebar-link>
 
                 <p class="px-3 pt-4 pb-1 text-xs font-semibold text-blue-400 uppercase tracking-wider">Laporan</p>
                 <x-sidebar-link route="laporan.cuti"   icon="chart-bar">Laporan Cuti</x-sidebar-link>

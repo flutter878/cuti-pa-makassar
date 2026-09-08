@@ -74,14 +74,12 @@ class PegawaiController extends Controller
             'atasan_langsung_id' => 'nullable|exists:pegawai,id',
             'status'             => 'required|in:aktif,nonaktif',
             // Akun user (opsional saat tambah)
-            'buat_akun'     => 'nullable|boolean',
-            'email_login'   => 'required_if:buat_akun,1|nullable|email|unique:users,email',
-            'password'      => 'required_if:buat_akun,1|nullable|string|min:8',
-            'role_id'       => 'required_if:buat_akun,1|nullable|exists:roles,id',
+            'buat_akun' => 'nullable|boolean',
+            'role_id'   => 'required_if:buat_akun,1|nullable|exists:roles,id',
         ], [
-            'nip.unique'         => 'NIP sudah terdaftar.',
-            'email.unique'       => 'Email pegawai sudah digunakan.',
-            'email_login.unique' => 'Email login sudah digunakan.',
+            'nip.unique'   => 'NIP sudah terdaftar.',
+            'email.unique' => 'Email pegawai sudah digunakan.',
+            'role_id.required_if' => 'Role wajib dipilih jika membuat akun.',
         ]);
 
         DB::transaction(function () use ($request) {
@@ -100,20 +98,24 @@ class PegawaiController extends Controller
             SaldoCuti::inisialisasi($pegawai->id);
 
             // Buat akun user jika diminta
+            // Login: NIP | Password default: NIP (pegawai wajib ganti setelah login pertama)
             if ($request->boolean('buat_akun')) {
+                // Email untuk akun: pakai email pegawai jika ada, atau buat internal nip@internal
+                $emailAkun = $pegawai->email ?: ($pegawai->nip . '@internal.pa-makassar.go.id');
+
                 User::create([
                     'role_id'    => $request->role_id,
                     'pegawai_id' => $pegawai->id,
                     'name'       => $pegawai->nama,
-                    'email'      => $request->email_login,
-                    'password'   => Hash::make($request->password),
+                    'email'      => $emailAkun,
+                    'password'   => Hash::make($pegawai->nip),
                     'status'     => $pegawai->status,
                 ]);
             }
         });
 
         return redirect()->route('pegawai.index')
-            ->with('success', 'Data pegawai berhasil ditambahkan.');
+            ->with('success', 'Data pegawai berhasil ditambahkan. Akun login: NIP sebagai username & password.');
     }
 
     public function show(Pegawai $pegawai): View
