@@ -249,15 +249,75 @@
                     </div>
                 </div>
 
+            @elseif($cuti->isMenungguRouting())
+                {{-- Sudah diverifikasi, belum ditentukan routing --}}
+                <div class="bg-indigo-50 border border-indigo-300 rounded-lg p-5">
+                    <div class="flex items-center gap-2 font-semibold text-indigo-800 mb-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                        </svg>
+                        Verifikasi Selesai
+                    </div>
+                    <p class="text-xs text-indigo-700 mb-1">Nomor surat dan masa kerja sudah diisi.</p>
+                    @if($cuti->nomor_surat)
+                        <p class="text-xs font-mono text-indigo-600 mb-3">{{ $cuti->nomor_surat }}</p>
+                    @endif
+                    <p class="text-xs text-indigo-700 mb-4 font-medium">Langkah berikutnya: tentukan siapa saja yang akan menyetujui pengajuan ini.</p>
+                    <a href="{{ route('admin-verifikasi.routing', $cuti) }}"
+                       class="flex items-center justify-center gap-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 rounded-lg transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Tentukan Routing Approval →
+                    </a>
+
+                    {{-- Tombol tolak masih bisa dilakukan --}}
+                    <button onclick="document.getElementById('modalTolakRouting').classList.remove('hidden')"
+                            class="mt-2 w-full border border-red-300 text-red-600 hover:bg-red-50 text-sm font-medium py-2 rounded-lg transition-colors">
+                        Batalkan / Tolak Pengajuan
+                    </button>
+                </div>
+
+                {{-- Modal tolak saat menunggu_routing --}}
+                <div id="modalTolakRouting" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+                    <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+                        <h3 class="text-base font-semibold text-gray-800 mb-3">Tolak Pengajuan</h3>
+                        <form method="POST" action="{{ route('admin-verifikasi.tolak', $cuti) }}">
+                            @csrf
+                            <div class="mb-4">
+                                <label class="block text-xs font-medium text-gray-700 mb-1">
+                                    Alasan Penolakan <span class="text-red-500">*</span>
+                                </label>
+                                <textarea name="catatan" rows="4" required minlength="3"
+                                          placeholder="Tuliskan alasan penolakan..."
+                                          class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-1 focus:ring-red-500 focus:border-red-500"></textarea>
+                            </div>
+                            <div class="flex gap-2">
+                                <button type="submit"
+                                        class="flex-1 bg-red-600 hover:bg-red-700 text-white text-sm font-medium py-2 rounded-lg transition-colors">
+                                    Konfirmasi Tolak
+                                </button>
+                                <button type="button"
+                                        onclick="document.getElementById('modalTolakRouting').classList.add('hidden')"
+                                        class="flex-1 border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-medium py-2 rounded-lg transition-colors">
+                                    Batal
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
             @elseif(!$cuti->isDitolak() && !$cuti->isDibatalkan())
                 <div class="bg-green-50 border border-green-200 rounded-lg p-4 text-sm text-green-700">
                     <div class="flex items-center gap-2 font-medium mb-1">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                         </svg>
-                        Sudah Diverifikasi
+                        Sudah Diproses
                     </div>
-                    <p class="text-xs">Pengajuan ini sudah diverifikasi dan sedang dalam proses persetujuan.</p>
+                    <p class="text-xs">Pengajuan ini sedang dalam proses persetujuan pejabat.</p>
                     @if($cuti->nomor_surat)
                         <p class="text-xs mt-1 font-mono">{{ $cuti->nomor_surat }}</p>
                     @endif

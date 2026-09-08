@@ -8,8 +8,19 @@
             Kembali ke Riwayat
         </a>
 
-        <div class="flex items-center gap-2">
-            {{-- Tombol Download PDF --}}
+        <div class="flex items-center gap-2 flex-wrap">
+            {{-- Edit (hanya saat dikembalikan) --}}
+            @if($cuti->bisaDiedit())
+                <a href="{{ route('cuti.edit', $cuti) }}"
+                   class="inline-flex items-center gap-2 bg-orange-500 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                    Perbaiki & Ajukan Ulang
+                </a>
+            @endif
+
+            {{-- Download PDF --}}
             <a href="{{ route('cuti.formulir', $cuti) }}" target="_blank"
                class="inline-flex items-center gap-2 border border-red-300 text-red-600 hover:bg-red-50 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -19,31 +30,47 @@
                 Download Formulir
             </a>
 
-            {{-- Tombol batal --}}
+            {{-- Batal --}}
             @if($cuti->bisaDibatalkan())
                 <form method="POST" action="{{ route('cuti.destroy', $cuti) }}"
                       onsubmit="return confirm('Yakin ingin membatalkan pengajuan ini?')">
                     @csrf @method('DELETE')
                     <button type="submit"
                             class="inline-flex items-center gap-2 border border-gray-300 text-gray-600 hover:bg-gray-50 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-                        Batalkan Pengajuan
+                        Batalkan
                     </button>
                 </form>
             @endif
         </div>
     </div>
 
+    {{-- Notifikasi dikembalikan --}}
+    @if($cuti->isDikembalikan())
+        <div class="mb-5 rounded-lg bg-orange-50 border border-orange-300 px-5 py-4 text-sm text-orange-900">
+            <p class="font-bold text-base mb-1">⚠ Pengajuan Dikembalikan</p>
+            <p>Pengajuan Anda dikembalikan untuk diperbaiki. Silakan klik <strong>Perbaiki & Ajukan Ulang</strong> di atas.</p>
+            @if($cuti->catatan)
+                <p class="mt-2 text-orange-800 font-medium">Catatan: {{ $cuti->catatan }}</p>
+            @endif
+        </div>
+    @endif
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
-        {{-- ===== DETAIL UTAMA ===== --}}
+        {{-- ── Detail Utama ──────────────────────────────────── --}}
         <div class="lg:col-span-2 space-y-5">
 
-            {{-- Header nomor + status --}}
+            {{-- Header status --}}
             <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-5">
                 <div class="flex items-start justify-between">
                     <div>
                         <p class="text-xs text-gray-500 mb-1">Nomor Pengajuan</p>
                         <p class="font-mono text-lg font-bold text-gray-800">{{ $cuti->nomor_pengajuan }}</p>
+                        @if($cuti->nomor_surat)
+                            <p class="text-xs text-gray-500 mt-1">
+                                Nomor Surat: <span class="font-medium">{{ $cuti->nomor_surat }}</span>
+                            </p>
+                        @endif
                         <p class="text-xs text-gray-400 mt-1">
                             Diajukan: {{ $cuti->tanggal_pengajuan->format('d M Y, H:i') }} WIT
                         </p>
@@ -54,16 +81,16 @@
                 </div>
             </div>
 
-            {{-- Data pengajuan --}}
+            {{-- Data Pengajuan --}}
             <x-form-card title="Data Pengajuan">
                 <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
                     <div>
                         <dt class="text-gray-500 mb-0.5">Jenis Cuti</dt>
-                        <dd class="font-medium text-gray-800">{{ $cuti->jenisCuti->nama }}</dd>
+                        <dd class="font-medium text-gray-800">{{ $cuti->jenisCuti?->nama ?? '-' }}</dd>
                     </div>
                     <div>
                         <dt class="text-gray-500 mb-0.5">Jumlah Hari</dt>
-                        <dd class="font-bold text-blue-900 text-lg">{{ $cuti->jumlah_hari }} hari</dd>
+                        <dd class="font-bold text-blue-900 text-lg">{{ $cuti->jumlah_hari }} hari kerja</dd>
                     </div>
                     <div>
                         <dt class="text-gray-500 mb-0.5">Tanggal Mulai</dt>
@@ -85,39 +112,79 @@
                         <dt class="text-gray-500 mb-0.5">No. Telepon</dt>
                         <dd class="text-gray-800">{{ $cuti->no_telepon ?? '—' }}</dd>
                     </div>
-                    @if($cuti->catatan)
-                        <div class="sm:col-span-2">
-                            <dt class="text-gray-500 mb-0.5">Catatan Admin</dt>
-                            <dd class="text-gray-800 italic">{{ $cuti->catatan }}</dd>
-                        </div>
-                    @endif
                 </dl>
             </x-form-card>
 
-            {{-- Identitas pegawai --}}
+            {{-- Identitas Pegawai --}}
             <x-form-card title="Identitas Pegawai">
                 <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
                     <div>
                         <dt class="text-gray-500 mb-0.5">Nama</dt>
-                        <dd class="font-medium text-gray-800">{{ $cuti->pegawai->nama }}</dd>
+                        <dd class="font-medium text-gray-800">{{ $cuti->pegawai?->nama ?? '-' }}</dd>
                     </div>
                     <div>
                         <dt class="text-gray-500 mb-0.5">NIP</dt>
-                        <dd class="font-mono text-gray-700">{{ $cuti->pegawai->nip }}</dd>
+                        <dd class="font-mono text-gray-700">{{ $cuti->pegawai?->nip ?? '-' }}</dd>
                     </div>
                     <div>
                         <dt class="text-gray-500 mb-0.5">Jabatan</dt>
-                        <dd class="text-gray-700">{{ $cuti->pegawai->jabatan?->nama_jabatan ?? '—' }}</dd>
+                        <dd class="text-gray-700">{{ $cuti->pegawai?->jabatan?->nama_jabatan ?? '—' }}</dd>
                     </div>
                     <div>
                         <dt class="text-gray-500 mb-0.5">Unit Kerja</dt>
-                        <dd class="text-gray-700">{{ $cuti->pegawai->unitKerja?->nama_unit ?? '—' }}</dd>
+                        <dd class="text-gray-700">{{ $cuti->pegawai?->unitKerja?->nama_unit ?? '—' }}</dd>
                     </div>
                 </dl>
             </x-form-card>
+
+            {{-- Alur Approval --}}
+            @if($cuti->approvalStages->count())
+                <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-5">
+                    <h3 class="font-semibold text-gray-800 mb-4 text-sm uppercase tracking-wide">Alur Persetujuan</h3>
+                    <div class="space-y-3">
+                        @foreach($cuti->approvalStages as $stage)
+                            <div class="flex gap-4 items-start">
+                                <div class="w-7 h-7 flex-shrink-0 rounded-full flex items-center justify-center text-xs font-bold
+                                    {{ $stage->isApproved() ? 'bg-green-100 text-green-700' :
+                                       ($stage->isRejected() ? 'bg-red-100 text-red-700' :
+                                       ($stage->isReturned() ? 'bg-orange-100 text-orange-700' :
+                                       ($stage->isSkipped() ? 'bg-gray-100 text-gray-500' :
+                                       'bg-yellow-100 text-yellow-700'))) }}">
+                                    {{ $stage->urutan }}
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between flex-wrap gap-2">
+                                        <div>
+                                            <p class="text-sm font-semibold text-gray-800">{{ $stage->label_tahap }}</p>
+                                            <p class="text-xs text-gray-500">
+                                                {{ $stage->nama_approver }} — {{ $stage->jabatan_approver }}
+                                            </p>
+                                            <p class="text-xs text-gray-400">{{ $stage->jenisTindakanLabel() }}</p>
+                                        </div>
+                                        <span class="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full {{ $stage->statusColor() }}">
+                                            {{ $stage->statusLabel() }}
+                                        </span>
+                                    </div>
+                                    @if($stage->catatan)
+                                        <p class="text-xs text-gray-600 mt-1 bg-gray-50 rounded px-2 py-1">
+                                            {{ $stage->catatan }}
+                                        </p>
+                                    @endif
+                                    @if($stage->tanggal_tindakan)
+                                        <p class="text-xs text-gray-400 mt-0.5">
+                                            {{ $stage->tanggal_tindakan->format('d M Y, H:i') }} WIT
+                                        </p>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
         </div>
 
-        {{-- ===== SIDEBAR ===== --}}
+        {{-- ── Sidebar ────────────────────────────────────────── --}}
         <div class="space-y-4">
 
             {{-- Lampiran --}}
@@ -139,43 +206,44 @@
                 @endforelse
             </x-form-card>
 
-            {{-- Detail pemakaian saldo --}}
+            {{-- Rincian saldo --}}
             @if($cuti->saldoDetail->isNotEmpty())
                 <x-form-card title="Rincian Saldo">
                     @foreach($cuti->saldoDetail as $detail)
-                        <div class="flex justify-between items-center text-sm py-1.5 border-b border-gray-100 last:border-0">
-                            <span class="text-gray-600">Saldo {{ $detail->saldoCuti->tahun }}</span>
+                        <div class="flex justify-between text-sm py-1.5 border-b border-gray-100 last:border-0">
+                            <span class="text-gray-600">Saldo {{ $detail->saldoCuti?->tahun }}</span>
                             <span class="font-semibold text-gray-800">{{ $detail->jumlah_digunakan }} hari</span>
                         </div>
                     @endforeach
-                    <div class="flex justify-between items-center text-sm pt-2 font-bold">
+                    <div class="flex justify-between text-sm pt-2 font-bold">
                         <span class="text-gray-700">Total</span>
                         <span class="text-blue-900">{{ $cuti->jumlah_hari }} hari</span>
                     </div>
                 </x-form-card>
             @endif
 
-            {{-- Riwayat persetujuan --}}
-            @if($cuti->persetujuan->isNotEmpty())
-                <x-form-card title="Riwayat Persetujuan">
-                    <div class="space-y-3">
-                        @foreach($cuti->persetujuan as $p)
-                            <div class="text-xs">
-                                <div class="flex items-center justify-between mb-0.5">
-                                    <span class="font-medium text-gray-700">{{ $p->user->name }}</span>
-                                    <span class="inline-flex px-1.5 py-0.5 rounded-full text-xs font-semibold
-                                        {{ $p->status === 'disetujui' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600' }}">
-                                        {{ ucfirst($p->status) }}
-                                    </span>
+            {{-- Audit Trail --}}
+            @if($cuti->auditTrail->count())
+                <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+                    <h4 class="text-sm font-semibold text-gray-800 mb-3">Riwayat Tindakan</h4>
+                    <div class="space-y-3 max-h-64 overflow-y-auto">
+                        @foreach($cuti->auditTrail->sortByDesc('created_at') as $trail)
+                            <div class="flex gap-2 text-xs">
+                                <div class="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 flex-shrink-0"></div>
+                                <div>
+                                    <p class="font-semibold text-gray-700">{{ $trail->aktor }}</p>
+                                    <p class="text-gray-600">{{ $trail->aksiLabel() }}</p>
+                                    @if($trail->keterangan)
+                                        <p class="text-gray-500 mt-0.5">{{ $trail->keterangan }}</p>
+                                    @endif
+                                    <p class="text-gray-400 mt-0.5">
+                                        {{ $trail->created_at->format('d M Y, H:i') }} WIT
+                                    </p>
                                 </div>
-                                @if($p->catatan)
-                                    <p class="text-gray-500 italic">{{ $p->catatan }}</p>
-                                @endif
-                                <p class="text-gray-400">{{ $p->tanggal_persetujuan?->format('d M Y, H:i') }}</p>
                             </div>
                         @endforeach
                     </div>
-                </x-form-card>
+                </div>
             @endif
 
         </div>

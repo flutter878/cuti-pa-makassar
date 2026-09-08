@@ -10,10 +10,11 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             RoleSeeder::class,
-            JabatanSeeder::class,
+            JabatanSeeder::class,        // include kolom kategori baru
             UnitKerjaSeeder::class,
             JenisCutiSeeder::class,
             SuperadminSeeder::class,
+            RoutingTemplateSeeder::class, // template routing workflow baru
         ]);
     }
 }

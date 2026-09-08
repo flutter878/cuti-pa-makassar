@@ -55,6 +55,25 @@ class Cuti extends Model
         return $this->hasMany(DokumenCuti::class);
     }
 
+    /**
+     * Tahapan approval dinamis (sistem baru)
+     */
+    public function approvalStages(): HasMany
+    {
+        return $this->hasMany(ApprovalStage::class)->orderBy('urutan');
+    }
+
+    /**
+     * Audit trail seluruh tindakan pada pengajuan ini
+     */
+    public function auditTrail(): HasMany
+    {
+        return $this->hasMany(CutiAuditTrail::class)->orderBy('created_at');
+    }
+
+    /**
+     * Persetujuan lama (backward compat — data sebelum sistem baru)
+     */
     public function persetujuan(): HasMany
     {
         return $this->hasMany(PersetujuanCuti::class);
@@ -63,61 +82,85 @@ class Cuti extends Model
     // ── Status helpers ──────────────────────────────────────
 
     public function isMenungguVerifikasiAdmin(): bool { return $this->status === 'menunggu_verifikasi_admin'; }
-    public function isMenungguAtasan(): bool          { return $this->status === 'menunggu_persetujuan_atasan'; }
-    public function isMenungguKetua(): bool           { return $this->status === 'menunggu_persetujuan_ketua'; }
-    public function isDisetujui(): bool               { return $this->status === 'disetujui'; }
-    public function isDitolak(): bool                 { return $this->status === 'ditolak'; }
-    public function isDibatalkan(): bool              { return $this->status === 'dibatalkan'; }
+    public function isMenungguRouting(): bool          { return $this->status === 'menunggu_routing'; }
+    public function isMenungguApproval(): bool         { return $this->status === 'menunggu_approval'; }
+    public function isDikembalikan(): bool             { return $this->status === 'dikembalikan'; }
+    public function isDisetujui(): bool                { return $this->status === 'disetujui'; }
+    public function isDitolak(): bool                  { return $this->status === 'ditolak'; }
+    public function isDibatalkan(): bool               { return $this->status === 'dibatalkan'; }
+    public function isSelesai(): bool                  { return $this->status === 'selesai'; }
 
-    /** Pegawai bisa batalkan selama belum diproses atasan */
+    /** Pegawai bisa batalkan selama belum diproses */
     public function bisaDibatalkan(): bool
     {
-        return in_array($this->status, ['menunggu_verifikasi_admin', 'menunggu_persetujuan_atasan'], true);
+        return in_array($this->status, [
+            'menunggu_verifikasi_admin',
+            'dikembalikan',
+        ], true);
     }
 
-    /** Admin bisa proses verifikasi */
+    /** Admin bisa verifikasi */
     public function bisaDiprosesAdmin(): bool
     {
         return $this->status === 'menunggu_verifikasi_admin';
     }
 
-    /** Atasan langsung bisa proses */
-    public function bisaDiprosesAtasan(): bool
+    /** Admin bisa tentukan routing */
+    public function bisaDiRouting(): bool
     {
-        return $this->status === 'menunggu_persetujuan_atasan';
+        return $this->status === 'menunggu_routing';
     }
 
-    /** Ketua bisa proses */
-    public function bisaDiprosesKetua(): bool
+    /** Dalam antrian approval pejabat */
+    public function sedangDiApproval(): bool
     {
-        return $this->status === 'menunggu_persetujuan_ketua';
+        return $this->status === 'menunggu_approval';
+    }
+
+    /** Pegawai bisa edit (dikembalikan) */
+    public function bisaDiedit(): bool
+    {
+        return $this->status === 'dikembalikan';
+    }
+
+    /** Ambil tahap approval yang sedang aktif (pending) */
+    public function tahapAktif(): ?ApprovalStage
+    {
+        return $this->approvalStages()
+                    ->where('status', 'pending')
+                    ->orderBy('urutan')
+                    ->first();
     }
 
     // ── Label & warna badge status ───────────────────────────
 
     public function statusLabel(): string
     {
-        return match($this->status) {
-            'menunggu_verifikasi_admin'  => 'Menunggu Verifikasi Admin',
-            'menunggu_persetujuan_atasan' => 'Menunggu Persetujuan Atasan',
-            'menunggu_persetujuan_ketua'  => 'Menunggu Persetujuan Ketua',
-            'disetujui'                  => 'Disetujui',
-            'ditolak'                    => 'Ditolak',
-            'dibatalkan'                 => 'Dibatalkan',
-            default                      => ucfirst(str_replace('_', ' ', $this->status)),
+        return match ($this->status) {
+            'menunggu_verifikasi_admin' => 'Menunggu Verifikasi Admin',
+            'menunggu_routing'          => 'Menunggu Penentuan Routing',
+            'menunggu_approval'         => 'Dalam Proses Approval',
+            'dikembalikan'              => 'Dikembalikan ke Pemohon',
+            'disetujui'                 => 'Disetujui',
+            'ditolak'                   => 'Ditolak',
+            'dibatalkan'                => 'Dibatalkan',
+            'selesai'                   => 'Selesai',
+            default                     => ucfirst(str_replace('_', ' ', $this->status)),
         };
     }
 
     public function statusColor(): string
     {
-        return match($this->status) {
-            'menunggu_verifikasi_admin'   => 'bg-purple-100 text-purple-700',
-            'menunggu_persetujuan_atasan' => 'bg-yellow-100 text-yellow-700',
-            'menunggu_persetujuan_ketua'  => 'bg-orange-100 text-orange-700',
-            'disetujui'                   => 'bg-green-100 text-green-700',
-            'ditolak'                     => 'bg-red-100 text-red-700',
-            'dibatalkan'                  => 'bg-gray-100 text-gray-500',
-            default                       => 'bg-gray-100 text-gray-500',
+        return match ($this->status) {
+            'menunggu_verifikasi_admin' => 'bg-purple-100 text-purple-700',
+            'menunggu_routing'          => 'bg-indigo-100 text-indigo-700',
+            'menunggu_approval'         => 'bg-yellow-100 text-yellow-700',
+            'dikembalikan'              => 'bg-orange-100 text-orange-700',
+            'disetujui'                 => 'bg-green-100 text-green-700',
+            'ditolak'                   => 'bg-red-100 text-red-700',
+            'dibatalkan'                => 'bg-gray-100 text-gray-500',
+            'selesai'                   => 'bg-teal-100 text-teal-700',
+            default                     => 'bg-gray-100 text-gray-500',
         };
     }
 
